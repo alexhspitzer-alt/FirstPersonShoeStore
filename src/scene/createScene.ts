@@ -8,7 +8,7 @@ import { createCamera } from '../camera/createCamera';
 import { RENDERING } from '../config';
 import { createStore } from '../world/createStore';
 
-export function createScene(engine: Engine): Scene {
+export function createScene(engine: Engine) {
   const scene = new Scene(engine);
   scene.clearColor = new Color4(0.87, 0.86, 0.84, 1);
 
@@ -20,7 +20,7 @@ export function createScene(engine: Engine): Scene {
   const fill = new DirectionalLight('fill', new Vector3(-0.6, -1, 0.4), scene);
   fill.intensity = RENDERING.directionalIntensity;
 
-  createStore(scene);
-  createCamera(scene);
-  return scene;
+  const floor = createStore(scene);
+  const camera = createCamera(scene);
+  return { scene, camera, floor };
 }

@@ -28,3 +28,15 @@ export const RENDERING = {
   ambientIntensity: 0.75,
   directionalIntensity: 0.5,
 } as const;
+
+export const CONTROLS = {
+  lookRadiansPerPixel: 0.004,
+  maxPitch: (85 * Math.PI) / 180,
+  dragThresholdPixels: 8,
+  maxTapMilliseconds: 300,
+  doubleTapMilliseconds: 350,
+  doubleTapRadiusPixels: 28,
+  stepDistance: 0.7,
+  stepDurationSeconds: 0.18,
+  wallClearance: 0.25,
+} as const;

@@ -1,7 +1,19 @@
 # First Person Shoe Store
 
-Milestone 1: open the game and see a completely empty rectangular store. Nothing
-moves. There are no controls, HUD, gameplay, external assets, physics, or backend.
+An empty rectangular store with touch-first looking and single-step movement.
+There are no HUD, external assets, physics, or backend.
+
+## Controls
+
+- Drag anywhere to look left, right, up, or down. Vertical looking stops short of flipping over.
+- Double-tap the visible floor to take one 0.7 m step toward that spot (shorter if nearby).
+- Single taps, long presses, drags, and taps on walls/ceiling do not move you.
+- Steps ease over 0.18 seconds and stop short of walls. Double-taps during a step
+  are ignored rather than queued; looking still works during movement.
+
+The same gestures work with a mouse or pen. There are no keyboard controls,
+joystick, pointer lock, or buttons. Sensitivity, gesture thresholds, step size,
+and room clearance live in `src/config.ts`.
 
 ## Run
 
@@ -17,6 +29,7 @@ Open the URL Vite prints. To check from a phone on the same network, run
 
 ```sh
 npm run typecheck  # TypeScript checks only
+npm test           # Gesture and headless scene movement checks
 npm run build      # TypeScript checks and production output in dist/
 npm run preview    # Serve the production build locally
 ```
@@ -35,9 +48,10 @@ src/
   app/startApp.ts          Application lifecycle, render loop, resize, disposal
   engine/createEngine.ts  Babylon WebGL engine and capped pixel density
   scene/createScene.ts    Scene composition and lighting
-  camera/createCamera.ts  Stationary, input-free camera
+  camera/createCamera.ts  Camera construction without built-in input handlers
+  input/attachPointerControls.ts  Drag/double-tap recognition and cancellation
   world/createStore.ts    Six primitive room surfaces and neutral materials
-  systems/README.md       Guidance for future gameplay modules; none exist yet
+  systems/createPlayerControls.ts  Look, floor picking, bounded step animation
 ```
 
 One world unit is one metre. The room is 8 m wide × 14 m deep × 3.2 m high;
@@ -69,8 +83,12 @@ if URL-based navigation is ever introduced.
 ## Manual smoke check
 
 Open the dev server or production preview: the floor, walls, and ceiling should
-form a lit, empty room. Resize between portrait and landscape. Drag, tap, scroll,
-and press movement/arrow keys: the viewpoint must stay unchanged.
+form a lit, empty room. Resize between portrait and landscape. Drag to look in all
+four directions, then double-tap the floor: exactly one short step should result.
+A single tap or a drag ending on the floor must not move the camera. Double-tap a
+wall: no movement. Try multi-touch and interrupt a gesture by switching apps:
+neither should leave controls stuck or trigger a step. Walk toward each wall to
+check that movement stops inside the room. Confirm floor picking after rotation.
 
-Natural next milestone: add a device-independent player input layer and basic
-first-person movement/look with desktop and mobile controls, keeping the room empty.
+Natural next milestone: add the first simple object and interaction using the
+existing input/action separation, while keeping the rest of the room empty.

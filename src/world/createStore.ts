@@ -1,10 +1,11 @@
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
 import { Color3 } from '@babylonjs/core/Maths/math.color';
 import { CreateBox } from '@babylonjs/core/Meshes/Builders/boxBuilder';
+import type { Mesh } from '@babylonjs/core/Meshes/mesh';
 import type { Scene } from '@babylonjs/core/scene';
 import { STORE } from '../config';
 
-export function createStore(scene: Scene): void {
+export function createStore(scene: Scene): Mesh {
   const { width, depth, height, shellThickness: thickness, colors } = STORE;
 
   const material = (name: string, color: string): StandardMaterial => {
@@ -23,17 +24,17 @@ export function createStore(scene: Scene): void {
     size: { width: number; height: number; depth: number },
     position: readonly [number, number, number],
     surface: StandardMaterial,
-  ): void => {
+  ): Mesh => {
     const mesh = CreateBox(name, size, scene);
     mesh.position.set(...position);
     mesh.material = surface;
-    mesh.isPickable = false;
+    return mesh;
   };
 
   // Six solid slabs expose their inward faces normally; no reversed normals or
   // double-sided materials are needed. Interior floor is exactly Y = 0.
   const slab = { width: width + 2 * thickness, height: thickness, depth: depth + 2 * thickness };
-  box('floor', slab, [0, -thickness / 2, 0], floor);
+  const ground = box('floor', slab, [0, -thickness / 2, 0], floor);
   box('ceiling', slab, [0, height + thickness / 2, 0], ceiling);
 
   const endWall = { width: width + 2 * thickness, height, depth: thickness };
@@ -43,4 +44,5 @@ export function createStore(scene: Scene): void {
   const sideWall = { width: thickness, height, depth };
   box('left-wall', sideWall, [-(width + thickness) / 2, height / 2, 0], walls);
   box('right-wall', sideWall, [(width + thickness) / 2, height / 2, 0], walls);
+  return ground;
 }
