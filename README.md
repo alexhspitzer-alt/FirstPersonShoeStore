@@ -5,7 +5,7 @@ There are no HUD, external assets, physics, or backend.
 
 ## Controls
 
-- Drag anywhere to look left, right, up, or down. Vertical looking stops short of flipping over.
+- Drag anywhere to look with inverted axes: dragging right turns left, and dragging up looks down. Vertical looking stops short of flipping over.
 - Double-tap the visible floor to take one 0.7 m step toward that spot (shorter if nearby).
 - Single taps, long presses, drags, and taps on walls/ceiling do not move you.
 - Steps ease over 0.18 seconds and stop short of walls. Double-taps during a step
@@ -50,14 +50,15 @@ src/
   scene/createScene.ts    Scene composition and lighting
   camera/createCamera.ts  Camera construction without built-in input handlers
   input/attachPointerControls.ts  Drag/double-tap recognition and cancellation
-  world/createStore.ts    Six primitive room surfaces and neutral materials
+  world/createStore.ts    Four cardinal walls and two step-spaced surface grids
   systems/createPlayerControls.ts  Look, floor picking, bounded step animation
 ```
 
 One world unit is one metre. The room is 8 m wide × 14 m deep × 3.2 m high;
 Y is up, the floor is at Y = 0, and X/Z = 0 is the room centre. A camera at
-1.65 m eye height looks into the room from near the front-left corner. Shared
-materials and simple lighting keep rendering inexpensive. Pixel density is capped
+1.65 m eye height looks into the room from near the front-left corner. Four colored walls mark the directions: north (+Z) blue, east (+X) green,
+south (-Z) orange, and west (-X) purple. Thin floor and ceiling grid lines
+are spaced one 0.7 m step apart. Simple materials and lighting keep rendering inexpensive. Pixel density is capped
 at 1.5, the canvas resizes with the viewport, and no desktop input API is assumed.
 The camera maintains horizontal field of view across portrait/landscape layouts.
 
@@ -89,6 +90,8 @@ A single tap or a drag ending on the floor must not move the camera. Double-tap 
 wall: no movement. Try multi-touch and interrupt a gesture by switching apps:
 neither should leave controls stuck or trigger a step. Walk toward each wall to
 check that movement stops inside the room. Confirm floor picking after rotation.
+Verify the floor and ceiling grid squares match a step and the four cardinal
+wall colors stay distinguishable.
 
 Natural next milestone: add the first simple object and interaction using the
 existing input/action separation, while keeping the rest of the room empty.

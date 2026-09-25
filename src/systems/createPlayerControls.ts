@@ -12,9 +12,9 @@ export function createPlayerControls(scene: Scene, camera: TargetCamera, floor: 
 
   return {
     look(deltaX: number, deltaY: number): void {
-      camera.rotation.y += deltaX * CONTROLS.lookRadiansPerPixel;
+      camera.rotation.y -= deltaX * CONTROLS.lookRadiansPerPixel;
       camera.rotation.x = clamp(
-        camera.rotation.x + deltaY * CONTROLS.lookRadiansPerPixel,
+        camera.rotation.x - deltaY * CONTROLS.lookRadiansPerPixel,
         -CONTROLS.maxPitch,
         CONTROLS.maxPitch,
       );

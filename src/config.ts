@@ -6,9 +6,15 @@ export const STORE = {
   height: 3.2,
   shellThickness: 0.16,
   colors: {
-    floor: '#aaa59b',
-    walls: '#deddd6',
-    ceiling: '#eeeae2',
+    floor: '#b6b8b8',
+    ceiling: '#e4e6e8',
+    floorGrid: '#555b5f',
+    ceilingGrid: '#69747b',
+    // Cardinal axes: +Z north, +X east, -Z south, -X west.
+    north: '#367acb',
+    east: '#8fba45',
+    south: '#e87937',
+    west: '#9b6bd1',
   },
 } as const;
 

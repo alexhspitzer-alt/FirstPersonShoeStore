@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { NullEngine } from '@babylonjs/core/Engines/nullEngine';
+import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
 import { Matrix, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { createScene } from '../src/scene/createScene';
 import { createPlayerControls } from '../src/systems/createPlayerControls';
@@ -28,10 +29,10 @@ test('look turns both axes, clamps pitch, and never moves or rolls the camera', 
   const position = h.camera.position.clone();
   const yaw = h.camera.rotation.y;
   h.controls.look(100, -100000);
-  assert.equal(h.camera.rotation.y, yaw + 100 * CONTROLS.lookRadiansPerPixel);
-  assert.equal(h.camera.rotation.x, -CONTROLS.maxPitch);
-  h.controls.look(-100, 100000);
+  assert.equal(h.camera.rotation.y, yaw - 100 * CONTROLS.lookRadiansPerPixel);
   assert.equal(h.camera.rotation.x, CONTROLS.maxPitch);
+  h.controls.look(-100, 100000);
+  assert.equal(h.camera.rotation.x, -CONTROLS.maxPitch);
   assert.equal(h.camera.rotation.z, 0);
   assert(h.camera.position.equals(position));
   h.dispose();
@@ -81,5 +82,40 @@ test('nearby targets are not overshot and steps stop inside the room boundary', 
   h.controls.stepAt(...h.screen(edge));
   h.controls.update(1);
   assert(Math.abs(h.camera.position.x - (STORE.width / 2 - CONTROLS.wallClearance)) < 1e-5);
+  h.dispose();
+});
+
+test('four colored directions and both step-spaced grids preserve floor picking', () => {
+  const h = setup();
+  const walls = [
+    ['north-wall', STORE.colors.north],
+    ['east-wall', STORE.colors.east],
+    ['south-wall', STORE.colors.south],
+    ['west-wall', STORE.colors.west],
+  ] as const;
+  for (const [name, color] of walls) {
+    const mesh = h.scene.getMeshByName(name);
+    assert(mesh?.material instanceof StandardMaterial);
+    assert.equal(mesh.material.diffuseColor.toHexString().toLowerCase(), color.toLowerCase());
+  }
+  assert.equal(new Set(walls.map(([, color]) => color)).size, 4);
+  for (const [name, y] of [['floor-step-grid', 0.006], ['ceiling-step-grid', STORE.height - 0.006]] as const) {
+    const mesh = h.scene.getMeshByName(name);
+    assert(mesh && !mesh.isPickable);
+    const positions = mesh.getVerticesData('position');
+    assert(positions && positions.length > 0);
+    const xs = new Set<number>();
+    const zs = new Set<number>();
+    for (let i = 0; i < positions.length; i += 3) {
+      assert(Math.abs(positions[i + 1]! - y) < 1e-5);
+      xs.add(Math.round(positions[i]! * 100));
+      zs.add(Math.round(positions[i + 2]! * 100));
+    }
+    assert(xs.has(0) && xs.has(70) && xs.has(-70));
+    assert(zs.has(0) && zs.has(70) && zs.has(-70));
+  }
+  h.controls.stepAt(...h.screen(new Vector3(0, 0, 2)));
+  h.controls.update(1);
+  assert(h.camera.position.z > VIEW.z);
   h.dispose();
 });
