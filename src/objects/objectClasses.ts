@@ -3,17 +3,16 @@ export interface ObjectProperties {
   interactive: boolean;
   movable: boolean;
   destructible: boolean;
+  /** A positive mass implies visibility and collision when the object is spawned. */
   mass: number;
   albedo: number;
   luminescence: number;
   hasTexture: boolean;
-  collidable: boolean;
-  visible: boolean;
-  opacity: number;
-  durability: number;
   color: string;
-  /** Size in world units (metres), before any instance transform. */
-  size: { width: number; height: number; depth: number };
+  /** Dimensions in world units (metres). */
+  width: number;
+  height: number;
+  depth: number;
 }
 
 export type ObjectClassId = 'architecture' | 'fixture' | 'looseProp' | 'merchandise' | 'lightFixture';
@@ -32,12 +31,10 @@ export const DEFAULT_OBJECT_PROPERTIES: Readonly<ObjectProperties> = Object.free
   albedo: 65,
   luminescence: 0,
   hasTexture: false,
-  collidable: true,
-  visible: true,
-  opacity: 100,
-  durability: 100,
   color: '#808080',
-  size: Object.freeze({ width: 1, height: 1, depth: 1 }),
+  width: 1,
+  height: 1,
+  depth: 1,
 });
 
 function objectClass(label: string, examples: string, overrides: Partial<ObjectProperties>): ObjectClass {
@@ -56,13 +53,11 @@ export const OBJECT_CLASSES: Readonly<Record<ObjectClassId, ObjectClass>> = Obje
     movable: true,
     destructible: true,
     mass: 20,
-    durability: 40,
   }),
   merchandise: objectClass('Merchandise', 'Sneakers, socks, accessories', {
     interactive: true,
     movable: true,
     mass: 5,
-    collidable: false,
   }),
   lightFixture: objectClass('Light fixture', 'Ceiling light, lit sign', {
     mass: 30,

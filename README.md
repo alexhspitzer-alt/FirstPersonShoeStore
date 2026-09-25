@@ -18,17 +18,18 @@ and room clearance live in `src/config.ts`.
 ## Object classes
 
 `src/objects/objectClasses.ts` defines reusable classes for future objects.
-`createObjectDefinition(id, classId, overrides?, transform?)` makes an independent
+`createObjectDefinition(id, classId, overrides?)` makes an independent
 description of one object; it does not add a mesh to the scene. Its caller
-supplies a stable ID and is responsible for keeping IDs unique. The current room still uses the simple
-geometry in `world/createStore.ts`.
+supplies a stable ID and is responsible for keeping IDs unique. Position and
+rotation belong to game state, not these definitions. The current room still
+uses the simple geometry in `world/createStore.ts`.
 
 | Class | Examples | Changes from shared defaults |
 | --- | --- | --- |
 | `architecture` | Walls, floor, ceiling | Mass 100 |
 | `fixture` | Shelf, counter, bench | Mass 75 |
-| `looseProp` | Box, sign, cup | Movable yes; destructible yes; mass 20; durability 40 |
-| `merchandise` | Shoes, socks | Interactive yes; movable yes; mass 5; collidable no |
+| `looseProp` | Box, sign, cup | Movable yes; destructible yes; mass 20 |
+| `merchandise` | Shoes, socks | Interactive yes; movable yes; mass 5 |
 | `lightFixture` | Ceiling light, lit sign | Mass 30; luminescence 80 |
 
 | Shared property | Default | Meaning |
@@ -40,17 +41,17 @@ geometry in `world/createStore.ts`.
 | Albedo | 65 | Relative surface brightness on a 0–100 game scale |
 | Luminescence | 0 | Self-lit appearance on a 0–100 game scale |
 | Has texture | No | An image texture has been assigned |
-| Collidable | Yes | Blocks physical travel if object collision is later enabled |
-| Visible | Yes | Rendered if added to the scene |
-| Opacity | 100 | 0 transparent, 100 opaque |
-| Durability | 100 | 0 broken, 100 intact; useful for destructible objects |
 | Color | `#808080` | Base color before lighting and texture |
-| Size | 1 × 1 × 1 m | Width, height, depth in world units |
-| Position and rotation | (0, 0, 0) each | Instance placement; rotation is in radians |
+| Width | 1 m | Object width |
+| Height | 1 m | Object height |
+| Depth | 1 m | Object depth |
 
 Numeric ratings must be finite and within 0–100; dimensions must be positive.
-These are data fields for now: `destructible` does not introduce damage logic,
-`collidable` does not turn on physics, and `luminescence` does not create a light.
+When actual objects are added to the scene, **mass above zero means visible and
+collidable**; these are derived rules, not separate class properties. Objects
+with zero mass do not have that requirement. These are data fields for now:
+`destructible` does not introduce damage logic and `luminescence` does not
+create a light.
 Class defaults and object overrides are separate, so customizing one sneaker
 cannot change another sneaker's properties.
 
