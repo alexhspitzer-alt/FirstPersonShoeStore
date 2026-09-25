@@ -22,7 +22,8 @@ npm run preview    # Serve the production build locally
 ```
 
 The lockfile pins dependency versions; use `npm ci` for reproducible clean installs.
-The browser must support WebGL. Vite is a development/build tool, not a game backend.
+The browser must support WebGL. A startup failure displays a brief explanation;
+successful startup shows only the room. Vite is a development/build tool, not a game backend.
 
 ## Structure
 
