@@ -7,6 +7,7 @@ import { Scene } from '@babylonjs/core/scene';
 import { createCamera } from '../camera/createCamera';
 import { RENDERING } from '../config';
 import { createStore } from '../world/createStore';
+import { createShelf } from '../world/createShelf';
 
 export function createScene(engine: Engine) {
   const scene = new Scene(engine);
@@ -21,6 +22,7 @@ export function createScene(engine: Engine) {
   fill.intensity = RENDERING.directionalIntensity;
 
   const floor = createStore(scene);
+  createShelf(scene);
   const camera = createCamera(scene);
   return { scene, camera, floor };
 }

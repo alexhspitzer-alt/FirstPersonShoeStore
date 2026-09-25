@@ -55,6 +55,15 @@ create a light.
 Class defaults and object overrides are separate, so customizing one sneaker
 cannot change another sneaker's properties.
 
+## First object
+
+`src/world/createShelf.ts` places a brown, solid rectangular prism at the
+horizontal center of the store, resting on the floor. It is a `fixture` with
+mass 90 and a width × height × depth of **3.5 × 2.1 × 0.7 metres** (five, three,
+and one grid intervals). Its brown color is `#80502f`. Positive mass makes it
+visible and blocks movement through its footprint. Placement lives in the
+world, outside the object class.
+
 ## Run
 
 Use Node.js 22.12+ (22.x) or Node.js 24+ and npm.
@@ -92,6 +101,7 @@ src/
   input/attachPointerControls.ts  Drag/double-tap recognition and cancellation
   objects/objectClasses.ts  Named object classes and shared defaults
   objects/createObjectDefinition.ts  Independent instance data and validation
+  world/createShelf.ts    Brown fixture prism and placement
   world/createStore.ts    Four cardinal walls and two step-spaced surface grids
   systems/createPlayerControls.ts  Look, floor picking, bounded step animation
 ```

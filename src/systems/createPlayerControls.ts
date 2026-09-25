@@ -10,6 +10,41 @@ export function createPlayerControls(scene: Scene, camera: TargetCamera, floor: 
   let step: { start: Vector3; end: Vector3; elapsed: number } | undefined;
   const clamp = (value: number, low: number, high: number): number => Math.max(low, Math.min(high, value));
 
+  function stopBeforeSolid(start: Vector3, end: Vector3): void {
+    let allowed = 1;
+    for (const mesh of scene.meshes) {
+      if (!mesh.checkCollisions || !mesh.isVisible) continue;
+      mesh.computeWorldMatrix(true);
+      const box = mesh.getBoundingInfo().boundingBox;
+      if (VIEW.eyeHeight < box.minimumWorld.y || VIEW.eyeHeight > box.maximumWorld.y) continue;
+
+      // Intersect the step segment with the object's horizontal footprint,
+      // enlarged by the player's clearance. This also handles diagonal steps.
+      let entry = 0;
+      let exit = 1;
+      for (const axis of ['x', 'z'] as const) {
+        const low = box.minimumWorld[axis] - CONTROLS.wallClearance;
+        const high = box.maximumWorld[axis] + CONTROLS.wallClearance;
+        const delta = end[axis] - start[axis];
+        if (Math.abs(delta) < 1e-8) {
+          if (start[axis] < low || start[axis] > high) entry = Infinity;
+          continue;
+        }
+        const near = (low - start[axis]) / delta;
+        const far = (high - start[axis]) / delta;
+        entry = Math.max(entry, Math.min(near, far));
+        exit = Math.min(exit, Math.max(near, far));
+      }
+      if (entry <= exit && entry <= allowed) {
+        allowed = Math.max(0, entry - 0.001);
+      }
+    }
+    if (allowed < 1) {
+      end.x = start.x + (end.x - start.x) * allowed;
+      end.z = start.z + (end.z - start.z) * allowed;
+    }
+  }
+
   return {
     look(deltaX: number, deltaY: number): void {
       camera.rotation.y -= deltaX * CONTROLS.lookRadiansPerPixel;
@@ -38,6 +73,8 @@ export function createPlayerControls(scene: Scene, camera: TargetCamera, floor: 
       end.x = clamp(end.x, -halfWidth, halfWidth);
       end.z = clamp(end.z, -halfDepth, halfDepth);
       end.y = VIEW.eyeHeight;
+      stopBeforeSolid(camera.position, end);
+      if (Vector3.DistanceSquared(camera.position, end) < 1e-8) return;
       step = { start: camera.position.clone(), end, elapsed: 0 };
     },
 

@@ -42,7 +42,7 @@ test('actual floor picks take one eased step at eye height in portrait, landscap
   for (const [width, height, scale] of [[800, 600, 1], [390, 844, 1], [585, 1266, 1 / 1.5]]) {
     const h = setup(width, height, scale);
     const start = h.camera.position.clone();
-    const point = new Vector3(0, 0, 2);
+    const point = new Vector3(0, 0, -3); // Clear floor in front of the shelf.
     h.controls.stepAt(...h.screen(point));
     h.controls.update(CONTROLS.stepDurationSeconds / 2);
     assert(Math.abs(Vector3.Distance(start, h.camera.position) - CONTROLS.stepDistance / 2) < 1e-5);
@@ -70,14 +70,14 @@ test('walls and ceiling occlude the ground and do not cause a step', () => {
 
 test('nearby targets are not overshot and steps stop inside the room boundary', () => {
   const h = setup();
-  h.camera.position.set(0, VIEW.eyeHeight, 0);
-  const near = new Vector3(0, 0, 0.2);
+  h.camera.position.set(0, VIEW.eyeHeight, -3);
+  const near = new Vector3(0, 0, -2.8);
   h.camera.setTarget(near);
   h.controls.stepAt(...h.screen(near));
   h.controls.update(1);
-  assert(Math.abs(h.camera.position.z - 0.2) < 1e-5);
-  h.camera.position.set(STORE.width / 2 - 0.3, VIEW.eyeHeight, 0);
-  const edge = new Vector3(STORE.width / 2 - 0.01, 0, 0);
+  assert(Math.abs(h.camera.position.z - (-2.8)) < 1e-5);
+  h.camera.position.set(STORE.width / 2 - 0.3, VIEW.eyeHeight, -3);
+  const edge = new Vector3(STORE.width / 2 - 0.01, 0, -3);
   h.camera.setTarget(edge);
   h.controls.stepAt(...h.screen(edge));
   h.controls.update(1);
@@ -114,8 +114,26 @@ test('four colored directions and both step-spaced grids preserve floor picking'
     assert(xs.has(0) && xs.has(70) && xs.has(-70));
     assert(zs.has(0) && zs.has(70) && zs.has(-70));
   }
-  h.controls.stepAt(...h.screen(new Vector3(0, 0, 2)));
+  h.controls.stepAt(...h.screen(new Vector3(0, 0, -3)));
   h.controls.update(1);
   assert(h.camera.position.z > VIEW.z);
+  h.dispose();
+});
+
+test('shelf is a centered, ground-resting brown solid with its requested properties', () => {
+  const h = setup();
+  const shelf = h.scene.getMeshByName('center-shelf');
+  assert(shelf?.material instanceof StandardMaterial);
+  assert.equal(shelf.material.diffuseColor.toHexString().toLowerCase(), '#80502f');
+  assert.equal(shelf.checkCollisions, true);
+  assert.equal(shelf.isVisible, true);
+  shelf.computeWorldMatrix(true);
+  const bounds = shelf.getBoundingInfo().boundingBox;
+  for (const [actual, expected] of [
+    [bounds.minimumWorld.x, -1.75], [bounds.minimumWorld.y, 0], [bounds.minimumWorld.z, -0.35],
+    [bounds.maximumWorld.x, 1.75], [bounds.maximumWorld.y, 2.1], [bounds.maximumWorld.z, 0.35],
+  ]) {
+    assert(Math.abs(actual - expected) < 1e-5);
+  }
   h.dispose();
 });
