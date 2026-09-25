@@ -50,13 +50,18 @@ The application owns lifecycle and cleanup; the scene composes camera, lights, a
 world. Add rooms/objects in `world/` and concrete gameplay modules in `systems/` as
 needed. There is no framework or speculative gameplay infrastructure to maintain.
 
-## GitHub Pages later
+## GitHub Pages
 
 `vite.config.ts` uses `base: './'`, so built asset URLs are relative to `index.html`.
-The same `dist/` works at `/FirstPersonShoeStore/` or a custom domain root. A future
-Pages workflow only needs `npm ci`, `npm run build`, and deployment of `dist/`;
-deployment is not configured in this milestone. Do not publish the source root or
-`node_modules/`. Import future assets through Vite or use `import.meta.env.BASE_URL`
+The same `dist/` works at `/FirstPersonShoeStore/` or a custom domain root.
+`.github/workflows/deploy.yml` installs locked dependencies, typechecks/builds, and
+deploys only `dist/` after each push to `main`. It can also be run manually from
+the Actions tab. In repository **Settings → Pages → Build and deployment**, choose
+**GitHub Actions** as the source. Publishing the source branch directly serves
+uncompiled TypeScript and produces a blank page.
+
+Do not publish the source root or `node_modules/`.
+Import future assets through Vite or use `import.meta.env.BASE_URL`
 for public assets; avoid hard-coded root-relative URLs. Revisit routing separately
 if URL-based navigation is ever introduced.
 
