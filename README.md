@@ -57,12 +57,14 @@ cannot change another sneaker's properties.
 
 ## First object
 
-`src/world/createShelf.ts` places a brown, solid rectangular prism at the
+`src/world/createShelf.ts` places a brown, three-level open shelf at the
 horizontal center of the store, resting on the floor. It is a `fixture` with
 mass 90 and a width × height × depth of **3.5 × 2.1 × 0.7 metres** (five, three,
 and one grid intervals). Its brown color is `#80502f`. Positive mass makes it
-visible and blocks movement through its footprint. Placement lives in the
-world, outside the object class.
+visible and blocks movement through its footprint. A dark grey shoebox sits
+on the middle level. It has mass 5 and is marked interactive and movable;
+interaction and carrying controls are not implemented yet. Placement lives in
+the world, outside the object classes.
 
 ## Run
 
@@ -101,7 +103,8 @@ src/
   input/attachPointerControls.ts  Drag/double-tap recognition and cancellation
   objects/objectClasses.ts  Named object classes and shared defaults
   objects/createObjectDefinition.ts  Independent instance data and validation
-  world/createShelf.ts    Brown fixture prism and placement
+  world/createShelf.ts    Three-level brown shelf and placement
+  world/createShoebox.ts  Grey shoebox definition and placement
   world/createStore.ts    Four cardinal walls and two step-spaced surface grids
   systems/createPlayerControls.ts  Look, floor picking, bounded step animation
 ```

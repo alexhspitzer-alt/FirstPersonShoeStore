@@ -6,6 +6,8 @@ import { Matrix, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { createScene } from '../src/scene/createScene';
 import { createPlayerControls } from '../src/systems/createPlayerControls';
 import { CONTROLS, STORE, VIEW } from '../src/config';
+import { GREY_SHOEBOX } from '../src/world/createShoebox';
+import { SHELF_BOARD_THICKNESS, SHELF_LEVELS } from '../src/world/createShelf';
 
 function setup(width = 800, height = 600, scaling = 1) {
   const engine = new NullEngine({ renderWidth: width, renderHeight: height, textureSize: 512, deterministicLockstep: false, lockstepMaxSteps: 4 });
@@ -120,7 +122,7 @@ test('four colored directions and both step-spaced grids preserve floor picking'
   h.dispose();
 });
 
-test('shelf is a centered, ground-resting brown solid with its requested properties', () => {
+test('shelf has three open levels within its original footprint and a grey shoebox on the middle level', () => {
   const h = setup();
   const shelf = h.scene.getMeshByName('center-shelf');
   assert(shelf?.material instanceof StandardMaterial);
@@ -135,5 +137,24 @@ test('shelf is a centered, ground-resting brown solid with its requested propert
   ]) {
     assert(Math.abs(actual - expected) < 1e-5);
   }
+  // Each board contributes a pair of horizontal surfaces at its own height.
+  const vertices = shelf.getVerticesData('position');
+  assert(vertices);
+  const heights = new Set<number>();
+  for (let index = 1; index < vertices.length; index += 3) heights.add(Math.round(vertices[index]! * 100));
+  for (const bottom of SHELF_LEVELS) {
+    assert(heights.has(Math.round(bottom * 100)));
+    assert(heights.has(Math.round((bottom + SHELF_BOARD_THICKNESS) * 100)));
+  }
+
+  assert.equal(GREY_SHOEBOX.properties.mass, 5);
+  assert.equal(GREY_SHOEBOX.properties.interactive, true);
+  assert.equal(GREY_SHOEBOX.properties.movable, true);
+  const box = h.scene.getMeshByName(GREY_SHOEBOX.id);
+  assert(box?.material instanceof StandardMaterial);
+  assert.equal(box.material.diffuseColor.toHexString().toLowerCase(), '#44464a');
+  assert.equal(box.checkCollisions, true);
+  assert.equal(box.isVisible, true);
+  assert(Math.abs(box.position.y - box.getBoundingInfo().boundingBox.extendSize.y - (SHELF_LEVELS[1] + SHELF_BOARD_THICKNESS)) < 1e-5);
   h.dispose();
 });

@@ -8,6 +8,7 @@ import { createCamera } from '../camera/createCamera';
 import { RENDERING } from '../config';
 import { createStore } from '../world/createStore';
 import { createShelf } from '../world/createShelf';
+import { createShoebox } from '../world/createShoebox';
 
 export function createScene(engine: Engine) {
   const scene = new Scene(engine);
@@ -23,6 +24,7 @@ export function createScene(engine: Engine) {
 
   const floor = createStore(scene);
   createShelf(scene);
+  createShoebox(scene);
   const camera = createCamera(scene);
   return { scene, camera, floor };
 }
