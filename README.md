@@ -62,9 +62,12 @@ horizontal center of the store, resting on the floor. It is a `fixture` with
 mass 90 and a width × height × depth of **3.5 × 2.1 × 0.7 metres** (five, three,
 and one grid intervals). Its brown color is `#80502f`. Positive mass makes it
 visible and blocks movement through its footprint. A dark grey shoebox sits
-on the middle level. It has mass 5 and is marked interactive and movable;
-interaction and carrying controls are not implemented yet. Placement lives in
-the world, outside the object classes.
+on the middle level. It has mass 5 and is marked interactive and movable.
+Tap it once to hold it at screen center while looking or walking; tap it again
+to drop it vertically onto the first surface below (a shelf board or floor).
+Single taps on other surfaces remain inert, and double taps on the floor step.
+Objects qualify for pickup when interactive and movable with mass greater than
+zero and below 25. Placement lives in the world, outside the object classes.
 
 ## Run
 
@@ -107,6 +110,7 @@ src/
   world/createShoebox.ts  Grey shoebox definition and placement
   world/createStore.ts    Four cardinal walls and two step-spaced surface grids
   systems/createPlayerControls.ts  Look, floor picking, bounded step animation
+  systems/createObjectInteraction.ts  Pickup, carried position, and vertical drop
 ```
 
 One world unit is one metre. The room is 8 m wide × 14 m deep × 3.2 m high;

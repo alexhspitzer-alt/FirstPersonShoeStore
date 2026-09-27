@@ -3,6 +3,8 @@ import { CONTROLS } from '../config';
 export interface PointerActions {
   look(deltaX: number, deltaY: number): void;
   stepAt(x: number, y: number): void;
+  /** Return true when an object consumes the single tap. */
+  tapAt(x: number, y: number): boolean;
 }
 
 export function attachPointerControls(canvas: HTMLCanvasElement, actions: PointerActions): () => void {
@@ -74,6 +76,10 @@ export function attachPointerControls(canvas: HTMLCanvasElement, actions: Pointe
       const x = event.clientX - rect.left;
       const y = event.clientY - rect.top;
       if (x < 0 || y < 0 || x >= rect.width || y >= rect.height) {
+        previousTap = undefined;
+        return;
+      }
+      if (actions.tapAt(x, y)) {
         previousTap = undefined;
         return;
       }

@@ -11,13 +11,15 @@ class TestCanvas extends EventTarget {
   getBoundingClientRect() { return { left: 20, top: 30, width: 400, height: 800 }; }
 }
 
-function setup() {
+function setup(consumeTap: (x: number, y: number) => boolean = () => false) {
   const canvas = new TestCanvas();
   const looks: number[][] = [];
   const steps: number[][] = [];
+  const objectTaps: number[][] = [];
   const dispose = attachPointerControls(canvas as unknown as HTMLCanvasElement, {
     look: (x, y) => looks.push([x, y]),
     stepAt: (x, y) => steps.push([x, y]),
+    tapAt: (x, y) => { objectTaps.push([x, y]); return consumeTap(x, y); },
   });
   const send = (type: string, time: number, x = 100, y = 200, extra = {}) => {
     const event = new Event(type, { cancelable: true });
@@ -30,8 +32,19 @@ function setup() {
     send('pointerdown', time, x, y);
     send('pointerup', time + 30, x, y);
   };
-  return { canvas, looks, steps, dispose, send, tap };
+  return { canvas, looks, steps, objectTaps, dispose, send, tap };
 }
+
+test('object taps happen immediately and never count toward a floor double tap', () => {
+  const h = setup((x) => x === 80);
+  h.tap(0);
+  assert.deepEqual(h.objectTaps, [[80, 170]]);
+  h.tap(150, 130);
+  assert.equal(h.steps.length, 0);
+  h.tap(250, 130);
+  assert.deepEqual(h.steps, [[110, 170]]);
+  h.dispose();
+});
 
 test('single tap does nothing; each nearby double-tap emits exactly one canvas-local step', () => {
   const h = setup();

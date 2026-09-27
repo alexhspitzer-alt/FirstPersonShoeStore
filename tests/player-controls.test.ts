@@ -5,6 +5,7 @@ import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
 import { Matrix, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { createScene } from '../src/scene/createScene';
 import { createPlayerControls } from '../src/systems/createPlayerControls';
+import { createObjectInteraction } from '../src/systems/createObjectInteraction';
 import { CONTROLS, STORE, VIEW } from '../src/config';
 import { GREY_SHOEBOX } from '../src/world/createShoebox';
 import { SHELF_BOARD_THICKNESS, SHELF_LEVELS } from '../src/world/createShelf';
@@ -156,5 +157,45 @@ test('shelf has three open levels within its original footprint and a grey shoeb
   assert.equal(box.checkCollisions, true);
   assert.equal(box.isVisible, true);
   assert(Math.abs(box.position.y - box.getBoundingInfo().boundingBox.extendSize.y - (SHELF_LEVELS[1] + SHELF_BOARD_THICKNESS)) < 1e-5);
+  h.dispose();
+});
+
+test('one tap carries the shoebox at screen center; a second tap drops it onto the floor', () => {
+  const h = setup();
+  const box = h.scene.getMeshByName(GREY_SHOEBOX.id);
+  assert(box);
+  const objects = createObjectInteraction(h.scene, h.camera, [GREY_SHOEBOX]);
+  h.scene.updateTransformMatrix(true);
+  assert.equal(objects.tapAt(...h.screen(box.position)), true);
+  assert.equal(box.parent, h.camera);
+  assert.deepEqual([box.position.x, box.position.y, box.position.z], [0, -0.18, 0.85]);
+  h.controls.look(55, 10);
+  h.camera.position.z += 0.7;
+  h.scene.updateTransformMatrix(true);
+  box.computeWorldMatrix(true);
+  const heldCenter = box.getBoundingInfo().boundingBox.centerWorld;
+  assert.equal(objects.tapAt(...h.screen(heldCenter)), true);
+  assert.equal(box.parent, null);
+  for (let i = 0; i < 100; i++) objects.update(0.02);
+  box.computeWorldMatrix(true);
+  assert(Math.abs(box.getBoundingInfo().boundingBox.minimumWorld.y) < 1e-4);
+  h.dispose();
+});
+
+test('shoebox drops onto the shelf board directly below it', () => {
+  const h = setup();
+  const box = h.scene.getMeshByName(GREY_SHOEBOX.id);
+  assert(box);
+  const objects = createObjectInteraction(h.scene, h.camera, [GREY_SHOEBOX]);
+  h.scene.updateTransformMatrix(true);
+  assert(objects.tapAt(...h.screen(box.position)));
+  h.camera.position.set(0, VIEW.eyeHeight, -1.05);
+  h.camera.setTarget(new Vector3(0, VIEW.eyeHeight, 0));
+  h.scene.updateTransformMatrix(true);
+  box.computeWorldMatrix(true);
+  assert(objects.tapAt(...h.screen(box.getBoundingInfo().boundingBox.centerWorld)));
+  for (let i = 0; i < 100; i++) objects.update(0.02);
+  box.computeWorldMatrix(true);
+  assert(Math.abs(box.getBoundingInfo().boundingBox.minimumWorld.y - (SHELF_LEVELS[1] + SHELF_BOARD_THICKNESS)) < 1e-4);
   h.dispose();
 });
