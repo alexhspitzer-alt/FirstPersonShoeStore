@@ -68,8 +68,9 @@ and collidable; the lid stops when its footprint strikes the box walls,
 keeping the horizontal position where it was dropped.
 Tap either piece to hold it at screen center while looking or walking; tap it
 again to drop it vertically onto the first surface below (a shelf board, box,
-or floor). Picking up the base carries a lid resting on it; the lid can also be
-picked up by itself.
+or floor). A lid lying flat on the box walls rides along when the base is
+lifted. A nearby or tilted lid remains separate, and the lid can be picked up
+by itself.
 Single taps on other surfaces remain inert, and double taps on the floor step.
 Objects qualify for pickup when interactive and movable with mass greater than
 zero and below 25. Placement lives in the world, outside the object classes.

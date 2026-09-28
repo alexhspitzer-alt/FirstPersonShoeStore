@@ -213,15 +213,35 @@ test('picking up the box carries its resting lid, while picking up the lid leave
   h.scene.updateTransformMatrix(true);
   assert(objects.tapAt(...h.screen(box.position)));
   assert.equal(box.parent, h.camera);
-  assert.equal(lid.parent, box);
+  assert.equal(lid.parent, null);
   lid.computeWorldMatrix(true);
   const lidBefore = lid.getBoundingInfo().boundingBox.centerWorld.x;
   h.camera.position.x += 0.6;
+  objects.update(0);
   box.computeWorldMatrix(true);
   lid.computeWorldMatrix(true);
   assert(Math.abs(lid.getBoundingInfo().boundingBox.centerWorld.x - lidBefore - 0.6) < 1e-5);
   assert(objects.tapAt(...h.screen(box.getBoundingInfo().boundingBox.centerWorld)));
   for (let i = 0; i < 100; i++) objects.update(0.02);
+  assert.equal(lid.parent, null);
+  h.dispose();
+});
+
+test('an angled lid touching the box is not carried when the box is picked up', () => {
+  const h = setup();
+  const box = h.scene.getMeshByName(GREY_SHOEBOX.id);
+  const lid = h.scene.getMeshByName(GREY_SHOEBOX_LID.id);
+  assert(box && lid);
+  // One edge touches the rim, but the lid is leaning beside the box.
+  lid.rotation.z = 0.65;
+  lid.position.set(box.position.x + 0.16, box.position.y + GREY_SHOEBOX.properties.height / 2 + 0.005, box.position.z);
+  lid.computeWorldMatrix(true);
+  const original = lid.getBoundingInfo().boundingBox.centerWorld.clone();
+  const objects = createObjectInteraction(h.scene, h.camera, [GREY_SHOEBOX, GREY_SHOEBOX_LID], [[box.name, lid.name]]);
+  h.scene.updateTransformMatrix(true);
+  assert(objects.tapAt(...h.screen(box.position)));
+  lid.computeWorldMatrix(true);
+  assert(lid.getBoundingInfo().boundingBox.centerWorld.equalsWithEpsilon(original, 1e-5));
   assert.equal(lid.parent, null);
   h.dispose();
 });

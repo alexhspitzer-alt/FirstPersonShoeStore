@@ -19,33 +19,46 @@ export function createObjectInteraction(
 ) {
   const definitions = new Map(objects.map((object) => [object.id, object]));
   let held: Mesh | undefined;
-  let fall: { mesh: Mesh; bottom: number; speed: number } | undefined;
-  let attached: Mesh | undefined;
+  const falls = new Map<Mesh, { bottom: number; speed: number }>();
+  let supported: { mesh: Mesh; lastBaseCenter: Vector3 } | undefined;
+
+  const overlap = (aMin: number, aMax: number, bMin: number, bMax: number) => aMin < bMax && aMax > bMin;
+
+  function touchesRim(top: Mesh, base: Mesh): boolean {
+    top.computeWorldMatrix(true);
+    base.computeWorldMatrix(true);
+    const lid = top.getBoundingInfo().boundingBox;
+    const box = base.getBoundingInfo().boundingBox;
+    const rim = 0.012; // Wall thickness of the simple shoebox mesh.
+    const crossesX = overlap(lid.minimumWorld.x, lid.maximumWorld.x, box.minimumWorld.x, box.maximumWorld.x);
+    const crossesZ = overlap(lid.minimumWorld.z, lid.maximumWorld.z, box.minimumWorld.z, box.maximumWorld.z);
+    const touchesSide = overlap(lid.minimumWorld.x, lid.maximumWorld.x, box.minimumWorld.x, box.minimumWorld.x + rim)
+      || overlap(lid.minimumWorld.x, lid.maximumWorld.x, box.maximumWorld.x - rim, box.maximumWorld.x);
+    const touchesEnd = overlap(lid.minimumWorld.z, lid.maximumWorld.z, box.minimumWorld.z, box.minimumWorld.z + rim)
+      || overlap(lid.minimumWorld.z, lid.maximumWorld.z, box.maximumWorld.z - rim, box.maximumWorld.z);
+    return (touchesSide && crossesZ) || (touchesEnd && crossesX);
+  }
+
+  function isResting(top: Mesh, base: Mesh): boolean {
+    if (top.parent || falls.has(top) || !touchesRim(top, base)) return false;
+    const topBounds = top.getBoundingInfo().boundingBox;
+    const baseBounds = base.getBoundingInfo().boundingBox;
+    // An angled lid next to the box is not a lid supported by its rim.
+    const up = Vector3.TransformNormal(Vector3.Up(), top.getWorldMatrix()).normalize();
+    return up.y > 0.98 && Math.abs(topBounds.minimumWorld.y - baseBounds.maximumWorld.y) < 0.015;
+  }
 
   function attachRestingObject(base: Mesh): void {
     for (const [baseId, topId] of restingPairs) {
       if (base.name !== baseId) continue;
       const top = scene.getMeshByName(topId) as Mesh | null;
-      if (!top || top.parent || fall?.mesh === top) continue;
-      base.computeWorldMatrix(true);
-      top.computeWorldMatrix(true);
-      const baseBounds = base.getBoundingInfo().boundingBox;
-      const topBounds = top.getBoundingInfo().boundingBox;
-      const baseTop = baseBounds.maximumWorld.y;
-      const topBottom = topBounds.minimumWorld.y;
-      if (Math.abs(baseTop - topBottom) > 0.025) continue;
-      if (topBounds.maximumWorld.x < baseBounds.minimumWorld.x || topBounds.minimumWorld.x > baseBounds.maximumWorld.x
-        || topBounds.maximumWorld.z < baseBounds.minimumWorld.z || topBounds.minimumWorld.z > baseBounds.maximumWorld.z) continue;
-      top.setParent(base); // Temporary game-state relationship while the base travels.
-      attached = top;
+      if (!top || !isResting(top, base)) continue;
+      supported = { mesh: top, lastBaseCenter: base.getBoundingInfo().boundingBox.centerWorld.clone() };
       break;
     }
   }
 
-  function drop(): void {
-    if (!held) return;
-    const mesh = held;
-    mesh.setParent(null); // Keeps the world-space position and orientation.
+  function startFall(mesh: Mesh): void {
     mesh.computeWorldMatrix(true);
     const bounds = mesh.getBoundingInfo().boundingBox;
     const halfHeight = (bounds.maximumWorld.y - bounds.minimumWorld.y) / 2;
@@ -53,7 +66,7 @@ export function createObjectInteraction(
     const ray = new Ray(new Vector3(mesh.position.x, bottom + 0.001, mesh.position.z), Vector3.Down(), 100);
     // Use actual shelf triangles, not its enclosing collision box: open levels
     // let the shoebox settle on whichever board is directly below it.
-    const support = scene.pickWithRay(ray, (candidate) => candidate !== mesh && candidate !== attached && candidate.isVisible && candidate.checkCollisions);
+    const support = scene.pickWithRay(ray, (candidate) => candidate !== mesh && candidate !== supported?.mesh && candidate.isVisible && candidate.checkCollisions);
     let supportHeight = support?.hit && support.pickedPoint ? support.pickedPoint.y : 0;
     // The center ray can pass through a hollow box. Check whether the lid's
     // footprint actually crosses any of its four thin walls instead.
@@ -64,20 +77,37 @@ export function createObjectInteraction(
       base.computeWorldMatrix(true);
       const box = base.getBoundingInfo().boundingBox;
       if (bottom + 0.001 < box.maximumWorld.y) continue;
-      const overlap = (aMin: number, aMax: number, bMin: number, bMax: number) => aMin < bMax && aMax > bMin;
-      const crossingX = overlap(bounds.minimumWorld.x, bounds.maximumWorld.x, box.minimumWorld.x, box.maximumWorld.x);
-      const crossingZ = overlap(bounds.minimumWorld.z, bounds.maximumWorld.z, box.minimumWorld.z, box.maximumWorld.z);
-      const rim = 0.012; // Approximate wall thickness for the simple shoebox mesh.
-      const touchesSide = overlap(bounds.minimumWorld.x, bounds.maximumWorld.x, box.minimumWorld.x, box.minimumWorld.x + rim)
-        || overlap(bounds.minimumWorld.x, bounds.maximumWorld.x, box.maximumWorld.x - rim, box.maximumWorld.x);
-      const touchesEnd = overlap(bounds.minimumWorld.z, bounds.maximumWorld.z, box.minimumWorld.z, box.minimumWorld.z + rim)
-        || overlap(bounds.minimumWorld.z, bounds.maximumWorld.z, box.maximumWorld.z - rim, box.maximumWorld.z);
-      if (!((touchesSide && crossingZ) || (touchesEnd && crossingX))) continue;
+      if (!touchesRim(mesh, base)) continue;
       supportHeight = Math.max(supportHeight, box.maximumWorld.y);
     }
     const restingCenter = supportHeight + halfHeight;
     mesh.position.y = Math.max(mesh.position.y, restingCenter);
-    fall = { mesh, bottom: restingCenter, speed: 0 };
+    falls.set(mesh, { bottom: restingCenter, speed: 0 });
+  }
+
+  function moveSupported(): void {
+    if (!supported) return;
+    const base = held ?? [...falls.keys()].find((mesh) => restingPairs.some(([id]) => id === mesh.name));
+    if (!base) { supported = undefined; return; }
+    base.computeWorldMatrix(true);
+    const nextCenter = base.getBoundingInfo().boundingBox.centerWorld;
+    supported.mesh.position.addInPlace(nextCenter.subtract(supported.lastBaseCenter));
+    supported.lastBaseCenter.copyFrom(nextCenter);
+    // No rigid parent link: an unsupported or tilted lid falls independently.
+    if (!isResting(supported.mesh, base)) {
+      const lid = supported.mesh;
+      supported = undefined;
+      startFall(lid);
+      return;
+    }
+  }
+
+  function drop(): void {
+    if (!held) return;
+    moveSupported();
+    const mesh = held;
+    mesh.setParent(null); // Keeps the world-space position and orientation.
+    startFall(mesh);
     held = undefined;
   }
 
@@ -85,7 +115,7 @@ export function createObjectInteraction(
     tapAt(x: number, y: number): boolean {
       // The held object can be tapped even when another mesh is behind it.
       if (held) {
-        if (!scene.pick(x, y, (mesh) => mesh === held || mesh === attached)?.hit) return false;
+        if (!scene.pick(x, y, (mesh) => mesh === held || mesh === supported?.mesh)?.hit) return false;
         drop();
         return true;
       }
@@ -94,27 +124,28 @@ export function createObjectInteraction(
       if (!picked || !definition) return false;
       const { interactive, movable, mass } = definition.properties;
       if (!interactive || !movable || mass >= MAX_PICKUP_MASS || mass <= 0) return false;
-      if (fall?.mesh === picked) fall = undefined;
-      if (picked === attached) attached = undefined;
+      falls.delete(picked);
+      if (picked === supported?.mesh) supported = undefined;
       attachRestingObject(picked);
       held = picked;
       picked.setParent(camera);
       picked.position.copyFrom(HOLD_OFFSET);
       picked.rotation.set(0, 0, 0);
+      moveSupported();
       return true;
     },
     update(deltaSeconds: number): void {
-      if (!fall) return;
+      moveSupported();
       const seconds = Math.max(0, Math.min(deltaSeconds, 0.05));
-      fall.speed += GRAVITY * seconds;
-      fall.mesh.position.y = Math.max(fall.bottom, fall.mesh.position.y - fall.speed * seconds);
-      if (fall.mesh.position.y <= fall.bottom) {
-        if (attached?.parent === fall.mesh) {
-          attached.setParent(null);
-          attached = undefined;
+      for (const [mesh, fall] of falls) {
+        fall.speed += GRAVITY * seconds;
+        mesh.position.y = Math.max(fall.bottom, mesh.position.y - fall.speed * seconds);
+        if (mesh.position.y <= fall.bottom) {
+          falls.delete(mesh);
+          if (supported && restingPairs.some(([id]) => id === mesh.name)) supported = undefined;
         }
-        fall = undefined;
       }
+      moveSupported();
     },
   };
 }
