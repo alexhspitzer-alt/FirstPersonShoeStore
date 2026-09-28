@@ -3,13 +3,13 @@ import { createScene } from '../scene/createScene';
 import { attachPointerControls } from '../input/attachPointerControls';
 import { createPlayerControls } from '../systems/createPlayerControls';
 import { createObjectInteraction } from '../systems/createObjectInteraction';
-import { GREY_SHOEBOX } from '../world/createShoebox';
+import { GREY_SHOEBOX, GREY_SHOEBOX_LID } from '../world/createShoebox';
 
 export function startApp(canvas: HTMLCanvasElement): () => void {
   const engine = createEngine(canvas);
   const { scene, camera, floor } = createScene(engine);
   const player = createPlayerControls(scene, camera, floor);
-  const objects = createObjectInteraction(scene, camera, [GREY_SHOEBOX]);
+  const objects = createObjectInteraction(scene, camera, [GREY_SHOEBOX, GREY_SHOEBOX_LID], [[GREY_SHOEBOX.id, GREY_SHOEBOX_LID.id]]);
   const detachControls = attachPointerControls(canvas, { ...player, tapAt: objects.tapAt });
   const render = (): void => {
     const deltaSeconds = engine.getDeltaTime() / 1000;

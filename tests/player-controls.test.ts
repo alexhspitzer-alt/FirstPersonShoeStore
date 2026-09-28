@@ -7,7 +7,7 @@ import { createScene } from '../src/scene/createScene';
 import { createPlayerControls } from '../src/systems/createPlayerControls';
 import { createObjectInteraction } from '../src/systems/createObjectInteraction';
 import { CONTROLS, STORE, VIEW } from '../src/config';
-import { GREY_SHOEBOX } from '../src/world/createShoebox';
+import { GREY_SHOEBOX, GREY_SHOEBOX_LID } from '../src/world/createShoebox';
 import { SHELF_BOARD_THICKNESS, SHELF_LEVELS } from '../src/world/createShelf';
 
 function setup(width = 800, height = 600, scaling = 1) {
@@ -157,6 +157,48 @@ test('shelf has three open levels within its original footprint and a grey shoeb
   assert.equal(box.checkCollisions, true);
   assert.equal(box.isVisible, true);
   assert(Math.abs(box.position.y - box.getBoundingInfo().boundingBox.extendSize.y - (SHELF_LEVELS[1] + SHELF_BOARD_THICKNESS)) < 1e-5);
+  const lid = h.scene.getMeshByName(GREY_SHOEBOX_LID.id);
+  assert(lid?.material instanceof StandardMaterial);
+  assert.equal(lid.parent, null);
+  assert(GREY_SHOEBOX_LID.properties.width > GREY_SHOEBOX.properties.width);
+  assert(GREY_SHOEBOX_LID.properties.depth > GREY_SHOEBOX.properties.depth);
+  assert(Math.abs(lid.position.y - GREY_SHOEBOX_LID.properties.height / 2 - (box.position.y + GREY_SHOEBOX.properties.height / 2)) < 1e-5);
+  assert.equal(box.getTotalVertices(), 5 * 24);
+  assert.equal(lid.getTotalVertices(), 5 * 24);
+  h.dispose();
+});
+
+test('picking up the box carries its resting lid, while picking up the lid leaves the box', () => {
+  const h = setup();
+  const box = h.scene.getMeshByName(GREY_SHOEBOX.id);
+  const lid = h.scene.getMeshByName(GREY_SHOEBOX_LID.id);
+  assert(box && lid);
+  const objects = createObjectInteraction(h.scene, h.camera, [GREY_SHOEBOX, GREY_SHOEBOX_LID], [[box.name, lid.name]]);
+  h.scene.updateTransformMatrix(true);
+  assert(objects.tapAt(...h.screen(lid.position)));
+  assert.equal(lid.parent, h.camera);
+  assert.equal(box.parent, null);
+  lid.computeWorldMatrix(true);
+  assert(objects.tapAt(...h.screen(lid.getBoundingInfo().boundingBox.centerWorld)));
+  for (let i = 0; i < 100; i++) objects.update(0.02);
+  assert.equal(lid.parent, null);
+
+  // Put the lid back on the box, then lift the base.
+  lid.position.set(box.position.x, box.position.y + GREY_SHOEBOX.properties.height / 2 + GREY_SHOEBOX_LID.properties.height / 2, box.position.z);
+  lid.computeWorldMatrix(true);
+  h.scene.updateTransformMatrix(true);
+  assert(objects.tapAt(...h.screen(box.position)));
+  assert.equal(box.parent, h.camera);
+  assert.equal(lid.parent, box);
+  lid.computeWorldMatrix(true);
+  const lidBefore = lid.getBoundingInfo().boundingBox.centerWorld.x;
+  h.camera.position.x += 0.6;
+  box.computeWorldMatrix(true);
+  lid.computeWorldMatrix(true);
+  assert(Math.abs(lid.getBoundingInfo().boundingBox.centerWorld.x - lidBefore - 0.6) < 1e-5);
+  assert(objects.tapAt(...h.screen(box.getBoundingInfo().boundingBox.centerWorld)));
+  for (let i = 0; i < 100; i++) objects.update(0.02);
+  assert.equal(lid.parent, null);
   h.dispose();
 });
 
