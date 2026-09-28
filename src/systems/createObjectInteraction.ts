@@ -54,7 +54,28 @@ export function createObjectInteraction(
     // Use actual shelf triangles, not its enclosing collision box: open levels
     // let the shoebox settle on whichever board is directly below it.
     const support = scene.pickWithRay(ray, (candidate) => candidate !== mesh && candidate !== attached && candidate.isVisible && candidate.checkCollisions);
-    const restingCenter = (support?.hit && support.pickedPoint ? support.pickedPoint.y : 0) + halfHeight;
+    let supportHeight = support?.hit && support.pickedPoint ? support.pickedPoint.y : 0;
+    // The center ray can pass through a hollow box. Check whether the lid's
+    // footprint actually crosses any of its four thin walls instead.
+    for (const [baseId, topId] of restingPairs) {
+      if (mesh.name !== topId) continue;
+      const base = scene.getMeshByName(baseId) as Mesh | null;
+      if (!base || !base.isVisible || !base.checkCollisions || base.parent) continue;
+      base.computeWorldMatrix(true);
+      const box = base.getBoundingInfo().boundingBox;
+      if (bottom + 0.001 < box.maximumWorld.y) continue;
+      const overlap = (aMin: number, aMax: number, bMin: number, bMax: number) => aMin < bMax && aMax > bMin;
+      const crossingX = overlap(bounds.minimumWorld.x, bounds.maximumWorld.x, box.minimumWorld.x, box.maximumWorld.x);
+      const crossingZ = overlap(bounds.minimumWorld.z, bounds.maximumWorld.z, box.minimumWorld.z, box.maximumWorld.z);
+      const rim = 0.012; // Approximate wall thickness for the simple shoebox mesh.
+      const touchesSide = overlap(bounds.minimumWorld.x, bounds.maximumWorld.x, box.minimumWorld.x, box.minimumWorld.x + rim)
+        || overlap(bounds.minimumWorld.x, bounds.maximumWorld.x, box.maximumWorld.x - rim, box.maximumWorld.x);
+      const touchesEnd = overlap(bounds.minimumWorld.z, bounds.maximumWorld.z, box.minimumWorld.z, box.minimumWorld.z + rim)
+        || overlap(bounds.minimumWorld.z, bounds.maximumWorld.z, box.maximumWorld.z - rim, box.maximumWorld.z);
+      if (!((touchesSide && crossingZ) || (touchesEnd && crossingX))) continue;
+      supportHeight = Math.max(supportHeight, box.maximumWorld.y);
+    }
+    const restingCenter = supportHeight + halfHeight;
     mesh.position.y = Math.max(mesh.position.y, restingCenter);
     fall = { mesh, bottom: restingCenter, speed: 0 };
     held = undefined;

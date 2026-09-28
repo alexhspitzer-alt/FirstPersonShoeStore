@@ -148,7 +148,7 @@ test('shelf has three open levels within its original footprint and a grey shoeb
     assert(heights.has(Math.round((bottom + SHELF_BOARD_THICKNESS) * 100)));
   }
 
-  assert.equal(GREY_SHOEBOX.properties.mass, 5);
+  assert.equal(GREY_SHOEBOX.properties.mass, 4);
   assert.equal(GREY_SHOEBOX.properties.interactive, true);
   assert.equal(GREY_SHOEBOX.properties.movable, true);
   const box = h.scene.getMeshByName(GREY_SHOEBOX.id);
@@ -159,12 +159,36 @@ test('shelf has three open levels within its original footprint and a grey shoeb
   assert(Math.abs(box.position.y - box.getBoundingInfo().boundingBox.extendSize.y - (SHELF_LEVELS[1] + SHELF_BOARD_THICKNESS)) < 1e-5);
   const lid = h.scene.getMeshByName(GREY_SHOEBOX_LID.id);
   assert(lid?.material instanceof StandardMaterial);
+  assert.equal(GREY_SHOEBOX_LID.properties.mass, 1);
+  assert.equal(lid.checkCollisions, true);
   assert.equal(lid.parent, null);
   assert(GREY_SHOEBOX_LID.properties.width > GREY_SHOEBOX.properties.width);
   assert(GREY_SHOEBOX_LID.properties.depth > GREY_SHOEBOX.properties.depth);
   assert(Math.abs(lid.position.y - GREY_SHOEBOX_LID.properties.height / 2 - (box.position.y + GREY_SHOEBOX.properties.height / 2)) < 1e-5);
   assert.equal(box.getTotalVertices(), 5 * 24);
   assert.equal(lid.getTotalVertices(), 5 * 24);
+  h.dispose();
+});
+
+test('offset lid stops when it overlaps a box wall without snapping to the box center', () => {
+  const h = setup();
+  const box = h.scene.getMeshByName(GREY_SHOEBOX.id);
+  const lid = h.scene.getMeshByName(GREY_SHOEBOX_LID.id);
+  assert(box && lid);
+  const objects = createObjectInteraction(h.scene, h.camera, [GREY_SHOEBOX, GREY_SHOEBOX_LID], [[box.name, lid.name]]);
+  h.scene.updateTransformMatrix(true);
+  assert(objects.tapAt(...h.screen(lid.position)));
+  const offsetX = box.position.x + 0.23; // Center outside the box; lid still overlaps its right wall.
+  h.camera.position.set(offsetX, VIEW.eyeHeight, -0.85);
+  h.camera.setTarget(new Vector3(offsetX, VIEW.eyeHeight, 0));
+  h.scene.updateTransformMatrix(true);
+  lid.computeWorldMatrix(true);
+  assert(objects.tapAt(...h.screen(lid.getBoundingInfo().boundingBox.centerWorld)));
+  for (let i = 0; i < 50; i++) objects.update(0.02);
+  lid.computeWorldMatrix(true);
+  box.computeWorldMatrix(true);
+  assert(Math.abs(lid.getBoundingInfo().boundingBox.minimumWorld.y - box.getBoundingInfo().boundingBox.maximumWorld.y) < 1e-4);
+  assert(Math.abs(lid.position.x - offsetX) < 1e-4);
   h.dispose();
 });
 

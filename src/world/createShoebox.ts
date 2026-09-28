@@ -11,14 +11,14 @@ export const GREY_SHOEBOX = createObjectDefinition('grey-shoebox', 'merchandise'
   width: 0.42,
   height: 0.22,
   depth: 0.28,
-  mass: 5,
+  mass: 4,
   interactive: true,
   movable: true,
 });
 
 export const GREY_SHOEBOX_LID = createObjectDefinition('grey-shoebox-lid', 'merchandise', {
   color: '#53555a', width: 0.44, height: 0.055, depth: 0.30,
-  mass: 2, interactive: true, movable: true,
+  mass: 1, interactive: true, movable: true,
 });
 
 const WALL_THICKNESS = 0.012;

@@ -62,8 +62,10 @@ horizontal center of the store, resting on the floor. It is a `fixture` with
 mass 90 and a width × height × depth of **3.5 × 2.1 × 0.7 metres** (five, three,
 and one grid intervals). Its brown color is `#80502f`. Positive mass makes it
 visible and blocks movement through its footprint. A dark grey shoebox sits
-on the middle level. Its hollow base has mass 5; its slightly wider, shallow
-hollow lid is a separate object with mass 2. Both are interactive and movable.
+on the middle level. Its hollow base has mass 4; its slightly wider, shallow
+hollow lid is a separate object with mass 1. Both are interactive, movable,
+and collidable; the lid stops when its footprint strikes the box walls,
+keeping the horizontal position where it was dropped.
 Tap either piece to hold it at screen center while looking or walking; tap it
 again to drop it vertically onto the first surface below (a shelf board, box,
 or floor). Picking up the base carries a lid resting on it; the lid can also be
