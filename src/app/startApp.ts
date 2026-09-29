@@ -7,13 +7,14 @@ import { GREY_SHOEBOX, GREY_SHOEBOX_LID } from '../world/createShoebox';
 
 export function startApp(canvas: HTMLCanvasElement): () => void {
   const engine = createEngine(canvas);
-  const { scene, camera, floor } = createScene(engine);
+  const { scene, camera, floor, updatePlayerBody } = createScene(engine);
   const player = createPlayerControls(scene, camera, floor);
   const objects = createObjectInteraction(scene, camera, [GREY_SHOEBOX, GREY_SHOEBOX_LID], [[GREY_SHOEBOX.id, GREY_SHOEBOX_LID.id]]);
   const detachControls = attachPointerControls(canvas, { ...player, tapAt: objects.tapAt });
   const render = (): void => {
     const deltaSeconds = engine.getDeltaTime() / 1000;
     player.update(deltaSeconds);
+    updatePlayerBody();
     objects.update(deltaSeconds);
     scene.render();
   };

@@ -5,6 +5,7 @@ import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { Scene } from '@babylonjs/core/scene';
 import { createCamera } from '../camera/createCamera';
+import { createPlayerBody } from '../camera/createPlayerBody';
 import { RENDERING } from '../config';
 import { createStore } from '../world/createStore';
 import { createShelf } from '../world/createShelf';
@@ -28,5 +29,6 @@ export function createScene(engine: Engine) {
   createShoebox(scene);
   createCheckout(scene);
   const camera = createCamera(scene);
-  return { scene, camera, floor };
+  const updatePlayerBody = createPlayerBody(scene, camera);
+  return { scene, camera, floor, updatePlayerBody };
 }

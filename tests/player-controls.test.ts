@@ -17,7 +17,7 @@ function setup(width = 800, height = 600, scaling = 1) {
   // NullEngine hard-codes this to 1; emulate the browser engine's configured DPI
   // so the test exercises Babylon's real CSS-pixel-to-render-pixel picking path.
   engine.getHardwareScalingLevel = () => scaling;
-  const { scene, camera, floor } = createScene(engine);
+  const { scene, camera, floor, updatePlayerBody } = createScene(engine);
   for (const mesh of scene.meshes) mesh.computeWorldMatrix(true);
   const controls = createPlayerControls(scene, camera, floor);
   const screen = (world: Vector3) => {
@@ -25,7 +25,7 @@ function setup(width = 800, height = 600, scaling = 1) {
     const pixel = Vector3.Project(world, Matrix.Identity(), scene.getTransformMatrix(), camera.viewport.toGlobal(width, height));
     return [pixel.x * scaling, pixel.y * scaling] as const;
   };
-  return { engine, scene, camera, controls, screen, dispose() { scene.dispose(); engine.dispose(); } };
+  return { engine, scene, camera, controls, screen, updatePlayerBody, dispose() { scene.dispose(); engine.dispose(); } };
 }
 
 test('look turns both axes, clamps pitch, and never moves or rolls the camera', () => {
@@ -189,6 +189,30 @@ test('checkout counter, POS, and clerk occupy distinct collidable spaces', () =>
   assert(CHECKOUT.clerkZ > CHECKOUT.z + CHECKOUT.counter.depth / 2);
   assert(h.scene.getMeshByName('pos-screen'));
   assert(h.scene.getMeshByName('clerk-head'));
+  assert(h.scene.getMeshByName('clerk-neck'));
+  assert(h.scene.getMeshByName('clerk-shoe--1'));
+  assert(h.scene.getMeshByName('clerk-shoe-1'));
+  h.dispose();
+});
+
+test('player legs and shoes follow position and yaw without blocking floor taps', () => {
+  const h = setup();
+  const leftLeg = h.scene.getMeshByName('player-leg--1');
+  const rightShoe = h.scene.getMeshByName('player-shoe-1');
+  assert(leftLeg && rightShoe);
+  assert(!leftLeg.isPickable && !rightShoe.isPickable);
+  assert(!leftLeg.checkCollisions && !rightShoe.checkCollisions);
+  const original = rightShoe.getAbsolutePosition().clone();
+  h.camera.position.x += 0.7;
+  h.camera.rotation.y += 0.3;
+  h.updatePlayerBody();
+  rightShoe.computeWorldMatrix(true);
+  assert(rightShoe.getAbsolutePosition().x > original.x + 0.5);
+  assert(Math.abs(rightShoe.getAbsolutePosition().y - 0.065) < 1e-5);
+  const before = h.camera.position.clone();
+  h.controls.stepAt(...h.screen(new Vector3(0, 0, -3)));
+  h.controls.update(1);
+  assert(!h.camera.position.equals(before));
   h.dispose();
 });
 

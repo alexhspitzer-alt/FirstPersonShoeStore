@@ -7,6 +7,7 @@ There are no HUD, external assets, physics, or backend.
 
 - Drag anywhere to look with inverted axes: dragging right turns left, and dragging up looks down. Vertical looking stops short of flipping over.
 - Double-tap the visible floor to take one 0.7 m step toward that spot (shorter if nearby).
+- Look down to see the player's legs and shoes; they follow steps and turning.
 - Single taps, long presses, drags, and taps on walls/ceiling do not move you.
 - Steps ease over 0.18 seconds and stop short of walls. Double-taps during a step
   are ignored rather than queued; looking still works during movement.
@@ -81,7 +82,7 @@ zero and below 25. Placement lives in the world, outside the object classes.
 `src/world/createCheckout.ts` places a wood counter near the east wall, a
 simple dark POS terminal on top, and a clerk behind it facing the store.
 These are static primitives with positive mass and collision. The clerk has
-no dialogue, transactions, movement, or other behavior yet.
+a neck, shoes, and no dialogue, transactions, movement, or other behavior yet.
 
 ## Run
 
@@ -117,6 +118,7 @@ src/
   engine/createEngine.ts  Babylon WebGL engine and capped pixel density
   scene/createScene.ts    Scene composition and lighting
   camera/createCamera.ts  Camera construction without built-in input handlers
+  camera/createPlayerBody.ts  Visible legs and shoes anchored to the floor
   input/attachPointerControls.ts  Drag/double-tap recognition and cancellation
   objects/objectClasses.ts  Named object classes and shared defaults
   objects/createObjectDefinition.ts  Independent instance data and validation

@@ -60,16 +60,21 @@ export function createCheckout(scene: Scene): void {
   const skin = material(scene, 'clerk-skin', '#b98a68');
   const pants = material(scene, 'clerk-pants', '#343b4b');
   const eye = material(scene, 'clerk-eyes', '#20232a');
-  const body = solid(CreateBox(CLERK.id, { width: 0.46, height: 0.95, depth: 0.3 }, scene), CLERK.properties.mass, uniform);
-  body.position.set(CHECKOUT.x, 1.12, CHECKOUT.clerkZ);
+  const shoes = material(scene, 'clerk-shoes', '#242931');
+  const body = solid(CreateBox(CLERK.id, { width: 0.46, height: 0.8, depth: 0.3 }, scene), CLERK.properties.mass, uniform);
+  body.position.set(CHECKOUT.x, 1.05, CHECKOUT.clerkZ);
+  const neck = solid(CreateBox('clerk-neck', { width: 0.13, height: 0.18, depth: 0.13 }, scene), CLERK.properties.mass, skin);
+  neck.position.set(CHECKOUT.x, 1.52, CHECKOUT.clerkZ);
   const head = solid(CreateSphere('clerk-head', { diameter: 0.34, segments: 12 }, scene), CLERK.properties.mass, skin);
-  head.position.set(CHECKOUT.x, 1.64, CHECKOUT.clerkZ - 0.025);
+  head.position.set(CHECKOUT.x, 1.74, CHECKOUT.clerkZ - 0.025);
   for (const sign of [-1, 1]) {
     const leg = solid(CreateBox(`clerk-leg-${sign}`, { width: 0.17, height: 0.64, depth: 0.19 }, scene), CLERK.properties.mass, pants);
     leg.position.set(CHECKOUT.x + sign * 0.13, 0.32, CHECKOUT.clerkZ);
+    const shoe = solid(CreateBox(`clerk-shoe-${sign}`, { width: 0.2, height: 0.12, depth: 0.33 }, scene), CLERK.properties.mass, shoes);
+    shoe.position.set(CHECKOUT.x + sign * 0.13, 0.06, CHECKOUT.clerkZ - 0.08);
     const arm = solid(CreateBox(`clerk-arm-${sign}`, { width: 0.13, height: 0.65, depth: 0.17 }, scene), CLERK.properties.mass, uniform);
     arm.position.set(CHECKOUT.x + sign * 0.30, 1.18, CHECKOUT.clerkZ);
     const pupil = solid(CreateSphere(`clerk-eye-${sign}`, { diameter: 0.035, segments: 8 }, scene), CLERK.properties.mass, eye);
-    pupil.position.set(CHECKOUT.x + sign * 0.075, 1.67, CHECKOUT.clerkZ - 0.184);
+    pupil.position.set(CHECKOUT.x + sign * 0.075, 1.77, CHECKOUT.clerkZ - 0.184);
   }
 }

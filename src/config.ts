@@ -53,5 +53,5 @@ export const CHECKOUT = {
   z: 2.1,
   counter: { width: 2.3, height: 0.95, depth: 0.7 },
   clerkZ: 2.85,
-  clerkHeight: 1.8,
+  clerkHeight: 1.9,
 } as const;
