@@ -1,6 +1,6 @@
 # First Person Shoe Store
 
-An empty rectangular store with touch-first looking and single-step movement.
+A small rectangular store with touch-first looking and single-step movement.
 There are no HUD, external assets, physics, or backend.
 
 ## Controls
@@ -31,6 +31,7 @@ uses the simple geometry in `world/createStore.ts`.
 | `looseProp` | Box, sign, cup | Movable yes; destructible yes; mass 20 |
 | `merchandise` | Shoes, socks | Interactive yes; movable yes; mass 5 |
 | `lightFixture` | Ceiling light, lit sign | Mass 30; luminescence 80 |
+| `npc` | Clerk, customer | Mass 70 |
 
 | Shared property | Default | Meaning |
 | --- | --- | --- |
@@ -75,6 +76,13 @@ Single taps on other surfaces remain inert, and double taps on the floor step.
 Objects qualify for pickup when interactive and movable with mass greater than
 zero and below 25. Placement lives in the world, outside the object classes.
 
+## Checkout
+
+`src/world/createCheckout.ts` places a wood counter near the east wall, a
+simple dark POS terminal on top, and a clerk behind it facing the store.
+These are static primitives with positive mass and collision. The clerk has
+no dialogue, transactions, movement, or other behavior yet.
+
 ## Run
 
 Use Node.js 22.12+ (22.x) or Node.js 24+ and npm.
@@ -114,6 +122,7 @@ src/
   objects/createObjectDefinition.ts  Independent instance data and validation
   world/createShelf.ts    Three-level brown shelf and placement
   world/createShoebox.ts  Separate open box and lid definitions and placement
+  world/createCheckout.ts  Counter, POS, and clerk geometry and placement
   world/createStore.ts    Four cardinal walls and two step-spaced surface grids
   systems/createPlayerControls.ts  Look, floor picking, bounded step animation
   systems/createObjectInteraction.ts  Pickup, carried position, and vertical drop

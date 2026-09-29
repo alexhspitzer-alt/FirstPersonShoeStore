@@ -46,3 +46,12 @@ export const CONTROLS = {
   stepDurationSeconds: 0.18,
   wallClearance: 0.25,
 } as const;
+
+// Checkout is toward the east wall, away from the starting camera and shelf.
+export const CHECKOUT = {
+  x: 2.35,
+  z: 2.1,
+  counter: { width: 2.3, height: 0.95, depth: 0.7 },
+  clerkZ: 2.85,
+  clerkHeight: 1.8,
+} as const;

@@ -15,7 +15,7 @@ export interface ObjectProperties {
   depth: number;
 }
 
-export type ObjectClassId = 'architecture' | 'fixture' | 'looseProp' | 'merchandise' | 'lightFixture';
+export type ObjectClassId = 'architecture' | 'fixture' | 'looseProp' | 'merchandise' | 'lightFixture' | 'npc';
 
 export interface ObjectClass {
   label: string;
@@ -63,4 +63,5 @@ export const OBJECT_CLASSES: Readonly<Record<ObjectClassId, ObjectClass>> = Obje
     mass: 30,
     luminescence: 80,
   }),
+  npc: objectClass('NPC', 'Clerk, customer', { mass: 70 }),
 });

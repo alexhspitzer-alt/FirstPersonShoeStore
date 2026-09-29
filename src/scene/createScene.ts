@@ -9,6 +9,7 @@ import { RENDERING } from '../config';
 import { createStore } from '../world/createStore';
 import { createShelf } from '../world/createShelf';
 import { createShoebox } from '../world/createShoebox';
+import { createCheckout } from '../world/createCheckout';
 
 export function createScene(engine: Engine) {
   const scene = new Scene(engine);
@@ -25,6 +26,7 @@ export function createScene(engine: Engine) {
   const floor = createStore(scene);
   createShelf(scene);
   createShoebox(scene);
+  createCheckout(scene);
   const camera = createCamera(scene);
   return { scene, camera, floor };
 }

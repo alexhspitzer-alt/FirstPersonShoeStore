@@ -6,7 +6,8 @@ import { Matrix, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { createScene } from '../src/scene/createScene';
 import { createPlayerControls } from '../src/systems/createPlayerControls';
 import { createObjectInteraction } from '../src/systems/createObjectInteraction';
-import { CONTROLS, STORE, VIEW } from '../src/config';
+import { CHECKOUT, CONTROLS, STORE, VIEW } from '../src/config';
+import { CLERK, COUNTER, POS } from '../src/world/createCheckout';
 import { GREY_SHOEBOX, GREY_SHOEBOX_LID } from '../src/world/createShoebox';
 import { SHELF_BOARD_THICKNESS, SHELF_LEVELS } from '../src/world/createShelf';
 
@@ -167,6 +168,27 @@ test('shelf has three open levels within its original footprint and a grey shoeb
   assert(Math.abs(lid.position.y - GREY_SHOEBOX_LID.properties.height / 2 - (box.position.y + GREY_SHOEBOX.properties.height / 2)) < 1e-5);
   assert.equal(box.getTotalVertices(), 5 * 24);
   assert.equal(lid.getTotalVertices(), 5 * 24);
+  h.dispose();
+});
+
+test('checkout counter, POS, and clerk occupy distinct collidable spaces', () => {
+  const h = setup();
+  const counter = h.scene.getMeshByName(COUNTER.id);
+  const terminal = h.scene.getMeshByName(POS.id);
+  const clerk = h.scene.getMeshByName(CLERK.id);
+  assert(counter && terminal && clerk);
+  for (const mesh of [counter, terminal, clerk]) {
+    assert(mesh.isVisible && mesh.checkCollisions);
+    assert(mesh.material instanceof StandardMaterial);
+  }
+  assert.equal(COUNTER.properties.movable, false);
+  assert.equal(POS.properties.movable, false);
+  assert.equal(CLERK.properties.interactive, false);
+  assert.equal(counter.position.x, CHECKOUT.x);
+  assert.equal(clerk.position.z, CHECKOUT.clerkZ);
+  assert(CHECKOUT.clerkZ > CHECKOUT.z + CHECKOUT.counter.depth / 2);
+  assert(h.scene.getMeshByName('pos-screen'));
+  assert(h.scene.getMeshByName('clerk-head'));
   h.dispose();
 });
 
