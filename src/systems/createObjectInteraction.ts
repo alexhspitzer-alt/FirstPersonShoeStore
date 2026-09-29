@@ -20,7 +20,7 @@ export function createObjectInteraction(
   const definitions = new Map(objects.map((object) => [object.id, object]));
   let held: Mesh | undefined;
   const falls = new Map<Mesh, { bottom: number; speed: number }>();
-  let supported: { mesh: Mesh; lastBaseCenter: Vector3 } | undefined;
+  let supported: { mesh: Mesh; base: Mesh; lastBaseCenter: Vector3 } | undefined;
 
   const overlap = (aMin: number, aMax: number, bMin: number, bMax: number) => aMin < bMax && aMax > bMin;
 
@@ -49,11 +49,12 @@ export function createObjectInteraction(
   }
 
   function attachRestingObject(base: Mesh): void {
-    for (const [baseId, topId] of restingPairs) {
-      if (base.name !== baseId) continue;
+    if (!restingPairs.some(([baseId]) => base.name === baseId)) return;
+    // Any lid physically resting here can ride along, regardless of its color.
+    for (const [, topId] of restingPairs) {
       const top = scene.getMeshByName(topId) as Mesh | null;
       if (!top || !isResting(top, base)) continue;
-      supported = { mesh: top, lastBaseCenter: base.getBoundingInfo().boundingBox.centerWorld.clone() };
+      supported = { mesh: top, base, lastBaseCenter: base.getBoundingInfo().boundingBox.centerWorld.clone() };
       break;
     }
   }
@@ -70,8 +71,8 @@ export function createObjectInteraction(
     let supportHeight = support?.hit && support.pickedPoint ? support.pickedPoint.y : 0;
     // The center ray can pass through a hollow box. Check whether the lid's
     // footprint actually crosses any of its four thin walls instead.
-    for (const [baseId, topId] of restingPairs) {
-      if (mesh.name !== topId) continue;
+    for (const [baseId] of restingPairs) {
+      if (!restingPairs.some(([, topId]) => mesh.name === topId)) break;
       const base = scene.getMeshByName(baseId) as Mesh | null;
       if (!base || !base.isVisible || !base.checkCollisions || base.parent) continue;
       base.computeWorldMatrix(true);
@@ -87,8 +88,8 @@ export function createObjectInteraction(
 
   function moveSupported(): void {
     if (!supported) return;
-    const base = held ?? [...falls.keys()].find((mesh) => restingPairs.some(([id]) => id === mesh.name));
-    if (!base) { supported = undefined; return; }
+    const base = supported.base;
+    if (held !== base && !falls.has(base)) { supported = undefined; return; }
     base.computeWorldMatrix(true);
     const nextCenter = base.getBoundingInfo().boundingBox.centerWorld;
     supported.mesh.position.addInPlace(nextCenter.subtract(supported.lastBaseCenter));
@@ -142,7 +143,7 @@ export function createObjectInteraction(
         mesh.position.y = Math.max(fall.bottom, mesh.position.y - fall.speed * seconds);
         if (mesh.position.y <= fall.bottom) {
           falls.delete(mesh);
-          if (supported && restingPairs.some(([id]) => id === mesh.name)) supported = undefined;
+          if (supported?.base === mesh) supported = undefined;
         }
       }
       moveSupported();

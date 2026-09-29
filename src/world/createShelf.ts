@@ -14,7 +14,10 @@ export const CENTER_SHELF = createObjectDefinition('center-shelf', 'fixture', {
 });
 
 export const SHELF_BOARD_THICKNESS = 0.08;
-export const SHELF_LEVELS = [0, CENTER_SHELF.properties.height / 2, CENTER_SHELF.properties.height - SHELF_BOARD_THICKNESS] as const;
+export const SHELF_LEVEL_COUNT = 5;
+export const SHELF_LEVELS = Array.from({ length: SHELF_LEVEL_COUNT }, (_, index) =>
+  index * (CENTER_SHELF.properties.height - SHELF_BOARD_THICKNESS) / (SHELF_LEVEL_COUNT - 1),
+);
 
 /** The class describes the object; the room decides its placement. */
 export function createShelf(scene: Scene): Mesh {

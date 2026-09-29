@@ -124,7 +124,7 @@ test('four colored directions and both step-spaced grids preserve floor picking'
   h.dispose();
 });
 
-test('shelf has three open levels within its original footprint and a grey shoebox on the middle level', () => {
+test('shelf has five open levels within its original footprint and a grey shoebox on the middle level', () => {
   const h = setup();
   const shelf = h.scene.getMeshByName('center-shelf');
   assert(shelf?.material instanceof StandardMaterial);
@@ -142,11 +142,12 @@ test('shelf has three open levels within its original footprint and a grey shoeb
   // Each board contributes a pair of horizontal surfaces at its own height.
   const vertices = shelf.getVerticesData('position');
   assert(vertices);
-  const heights = new Set<number>();
-  for (let index = 1; index < vertices.length; index += 3) heights.add(Math.round(vertices[index]! * 100));
+  const heights: number[] = [];
+  for (let index = 1; index < vertices.length; index += 3) heights.push(vertices[index]!);
+  assert.equal(SHELF_LEVELS.length, 5);
   for (const bottom of SHELF_LEVELS) {
-    assert(heights.has(Math.round(bottom * 100)));
-    assert(heights.has(Math.round((bottom + SHELF_BOARD_THICKNESS) * 100)));
+    assert(heights.some((height) => Math.abs(height - bottom) < 1e-5));
+    assert(heights.some((height) => Math.abs(height - bottom - SHELF_BOARD_THICKNESS) < 1e-5));
   }
 
   assert.equal(GREY_SHOEBOX.properties.mass, 4);
@@ -157,7 +158,7 @@ test('shelf has three open levels within its original footprint and a grey shoeb
   assert.equal(box.material.diffuseColor.toHexString().toLowerCase(), '#44464a');
   assert.equal(box.checkCollisions, true);
   assert.equal(box.isVisible, true);
-  assert(Math.abs(box.position.y - box.getBoundingInfo().boundingBox.extendSize.y - (SHELF_LEVELS[1] + SHELF_BOARD_THICKNESS)) < 1e-5);
+  assert(Math.abs(box.position.y - box.getBoundingInfo().boundingBox.extendSize.y - (SHELF_LEVELS[2]! + SHELF_BOARD_THICKNESS)) < 1e-5);
   const lid = h.scene.getMeshByName(GREY_SHOEBOX_LID.id);
   assert(lid?.material instanceof StandardMaterial);
   assert.equal(GREY_SHOEBOX_LID.properties.mass, 1);
@@ -307,6 +308,6 @@ test('shoebox drops onto the shelf board directly below it', () => {
   assert(objects.tapAt(...h.screen(box.getBoundingInfo().boundingBox.centerWorld)));
   for (let i = 0; i < 100; i++) objects.update(0.02);
   box.computeWorldMatrix(true);
-  assert(Math.abs(box.getBoundingInfo().boundingBox.minimumWorld.y - (SHELF_LEVELS[1] + SHELF_BOARD_THICKNESS)) < 1e-4);
+  assert(Math.abs(box.getBoundingInfo().boundingBox.minimumWorld.y - (SHELF_LEVELS[2]! + SHELF_BOARD_THICKNESS)) < 1e-4);
   h.dispose();
 });

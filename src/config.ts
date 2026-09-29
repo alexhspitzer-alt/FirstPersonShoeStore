@@ -55,3 +55,13 @@ export const CHECKOUT = {
   clerkZ: 2.85,
   clerkHeight: 1.9,
 } as const;
+
+// Feet are floor geometry beneath the eye, not a camera-space overlay.
+export const PLAYER_FEET = {
+  spacing: 0.24,
+  length: 0.26,
+  width: 0.10,
+  height: 0.065,
+  eyeToAnkleOffset: -0.035,
+  color: '#c99170',
+} as const;

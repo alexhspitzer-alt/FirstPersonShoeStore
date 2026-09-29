@@ -8,7 +8,8 @@ import { createCamera } from '../camera/createCamera';
 import { RENDERING } from '../config';
 import { createStore } from '../world/createStore';
 import { createShelf } from '../world/createShelf';
-import { createShoebox } from '../world/createShoebox';
+import { createShelfStock } from '../world/createShelfStock';
+import { createPlayerFeet } from '../player/createPlayerFeet';
 import { createCheckout } from '../world/createCheckout';
 
 export function createScene(engine: Engine) {
@@ -25,8 +26,9 @@ export function createScene(engine: Engine) {
 
   const floor = createStore(scene);
   createShelf(scene);
-  createShoebox(scene);
+  const stock = createShelfStock(scene);
   createCheckout(scene);
   const camera = createCamera(scene);
-  return { scene, camera, floor };
+  const feet = createPlayerFeet(scene, camera);
+  return { scene, camera, floor, feet, stock };
 }

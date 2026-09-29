@@ -58,12 +58,13 @@ cannot change another sneaker's properties.
 
 ## First object
 
-`src/world/createShelf.ts` places a brown, three-level open shelf at the
+`src/world/createShelf.ts` places a brown, five-level open shelf at the
 horizontal center of the store, resting on the floor. It is a `fixture` with
 mass 90 and a width × height × depth of **3.5 × 2.1 × 0.7 metres** (five, three,
 and one grid intervals). Its brown color is `#80502f`. Positive mass makes it
-visible and blocks movement through its footprint. A dark grey shoebox sits
-on the middle level. Its hollow base has mass 4; its slightly wider, shallow
+visible and blocks movement through its footprint. Fifteen colored shoeboxes sit across the five levels. Each has a similar-colored
+lid, shoe-size data, and a high-contrast number label on its aisle-facing end.
+The original dark grey box remains on the middle level. Its hollow base has mass 4; its slightly wider, shallow
 hollow lid is a separate object with mass 1. Both are interactive, movable,
 and collidable; the lid stops when its footprint strikes the box walls,
 keeping the horizontal position where it was dropped.
@@ -75,6 +76,21 @@ by itself.
 Single taps on other surfaces remain inert, and double taps on the floor step.
 Objects qualify for pickup when interactive and movable with mass greater than
 zero and below 25. Placement lives in the world, outside the object classes.
+
+## Player feet and stock
+
+Look down to see bare feet at normal foot scale on the floor beneath the camera.
+They follow player position and heading, never head pitch; ordinary perspective
+reveals them continuously without a visibility threshold. There are no legs or
+walking animation yet. Each foot has an equipment slot for a future independent,
+removable shoe object; equipping/unequipping is not implemented.
+
+`defineShoebox(id, color, shoeSize)` describes a matching box/lid pair;
+`createShoebox(scene, definition, position)` builds and places it. Shoe size is
+merchandise-specific data, not a shared property of every object. The starter
+stock recipe in `createShelfStock.ts` can be replaced by generated data without
+changing meshes or pickup registration. Labels use small primitive numerals,
+share two materials, and move with their box; they need no canvas textures/fonts.
 
 ## Checkout
 
@@ -120,8 +136,10 @@ src/
   input/attachPointerControls.ts  Drag/double-tap recognition and cancellation
   objects/objectClasses.ts  Named object classes and shared defaults
   objects/createObjectDefinition.ts  Independent instance data and validation
-  world/createShelf.ts    Three-level brown shelf and placement
-  world/createShoebox.ts  Separate open box and lid definitions and placement
+  world/createShelf.ts    Five-level brown shelf and placement
+  world/createShoebox.ts  Reusable open box/lid factory and numeric labels
+  world/createShelfStock.ts  Starter stock recipe and interaction registration
+  player/createPlayerFeet.ts  Floor-anchored bare feet and future shoe slots
   world/createCheckout.ts  Counter, POS, and clerk geometry and placement
   world/createStore.ts    Four cardinal walls and two step-spaced surface grids
   systems/createPlayerControls.ts  Look, floor picking, bounded step animation
@@ -158,7 +176,7 @@ if URL-based navigation is ever introduced.
 ## Manual smoke check
 
 Open the dev server or production preview: the floor, walls, and ceiling should
-form a lit, empty room. Resize between portrait and landscape. Drag to look in all
+form a lit store with five shelf levels, labeled boxes, and checkout. Resize between portrait and landscape. Drag to look in all
 four directions, then double-tap the floor: exactly one short step should result.
 A single tap or a drag ending on the floor must not move the camera. Double-tap a
 wall: no movement. Try multi-touch and interrupt a gesture by switching apps:
@@ -167,5 +185,5 @@ check that movement stops inside the room. Confirm floor picking after rotation.
 Verify the floor and ceiling grid squares match a step and the four cardinal
 wall colors stay distinguishable.
 
-Natural next milestone: add the first simple object and interaction using the
-existing input/action separation, while keeping the rest of the room empty.
+Natural next milestone: create shoe objects and implement equipping/removing them
+using the foot slots and each shoebox’s size data.
