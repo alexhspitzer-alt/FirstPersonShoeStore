@@ -195,17 +195,18 @@ test('checkout counter, POS, and clerk occupy distinct collidable spaces', () =>
   h.dispose();
 });
 
-test('player legs and shoes follow position and yaw without blocking floor taps', () => {
+test('player shoes appear only when looking nearly straight down and do not block floor taps', () => {
   const h = setup();
-  const leftLeg = h.scene.getMeshByName('player-leg--1');
+  assert.equal(h.scene.getMeshByName('player-leg--1'), null);
   const rightShoe = h.scene.getMeshByName('player-shoe-1');
-  assert(leftLeg && rightShoe);
-  assert(!leftLeg.isPickable && !rightShoe.isPickable);
-  assert(!leftLeg.checkCollisions && !rightShoe.checkCollisions);
+  assert(rightShoe);
+  assert.equal(rightShoe.isVisible, false);
+  assert(!rightShoe.isPickable && !rightShoe.checkCollisions);
   const original = rightShoe.getAbsolutePosition().clone();
   h.camera.position.x += 0.7;
   h.camera.rotation.y += 0.3;
   h.updatePlayerBody();
+  assert.equal(rightShoe.isVisible, false);
   rightShoe.computeWorldMatrix(true);
   assert(rightShoe.getAbsolutePosition().x > original.x + 0.5);
   assert(Math.abs(rightShoe.getAbsolutePosition().y - 0.065) < 1e-5);
@@ -213,6 +214,12 @@ test('player legs and shoes follow position and yaw without blocking floor taps'
   h.controls.stepAt(...h.screen(new Vector3(0, 0, -3)));
   h.controls.update(1);
   assert(!h.camera.position.equals(before));
+  h.camera.rotation.x = VIEW.shoeRevealPitch;
+  h.updatePlayerBody();
+  assert.equal(rightShoe.isVisible, true);
+  h.camera.rotation.x = 0;
+  h.updatePlayerBody();
+  assert.equal(rightShoe.isVisible, false);
   h.dispose();
 });
 

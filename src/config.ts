@@ -26,6 +26,7 @@ export const VIEW = {
   horizontalFov: (80 * Math.PI) / 180,
   nearClip: 0.05,
   farClip: 100,
+  shoeRevealPitch: (78 * Math.PI) / 180,
 } as const;
 
 export const RENDERING = {
