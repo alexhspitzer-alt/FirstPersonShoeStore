@@ -79,9 +79,11 @@ zero and below 25. Placement lives in the world, outside the object classes.
 
 ## Player feet and stock
 
-Look down to see bare feet at normal foot scale on the floor beneath the camera.
-They follow player position and heading, never head pitch; ordinary perspective
-reveals them continuously without a visibility threshold. There are no legs or
+Look down to see broad, continuous bare-foot silhouettes near the bottom of the
+screen. Feet follow player position and heading at floor height. A separate
+first-person camera renders only feet/equipment with a tighter field of view
+and viewport-aware pitch framing; the store camera and picking stay unchanged.
+Feet enter the view through ordinary clipping, without a visibility threshold. There are no legs or
 walking animation yet. Each foot has an equipment slot for a future independent,
 removable shoe object; equipping/unequipping is not implemented.
 

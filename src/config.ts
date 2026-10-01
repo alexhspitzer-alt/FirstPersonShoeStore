@@ -56,12 +56,16 @@ export const CHECKOUT = {
   clerkHeight: 1.9,
 } as const;
 
-// Feet are floor geometry beneath the eye, not a camera-space overlay.
+// Floor-anchored feet use a separate first-person view for size and framing.
 export const PLAYER_FEET = {
-  spacing: 0.24,
-  length: 0.26,
-  width: 0.10,
+  spacing: 0.32,
+  length: 0.32,
+  width: 0.15,
   height: 0.065,
   eyeToAnkleOffset: -0.035,
-  color: '#c99170',
+  color: '#bd927b',
+  layerMask: 0x10000000,
+  horizontalFov: (38 * Math.PI) / 180,
+  minimumVerticalFov: (45 * Math.PI) / 180,
+  screenCenterY: 0.86,
 } as const;
