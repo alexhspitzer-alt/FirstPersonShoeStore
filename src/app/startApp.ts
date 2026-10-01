@@ -6,9 +6,11 @@ import { createObjectInteraction } from '../systems/createObjectInteraction';
 
 export function startApp(canvas: HTMLCanvasElement): () => void {
   const engine = createEngine(canvas);
-  const { scene, camera, floor, feet, stock } = createScene(engine);
+  const { scene, camera, floor, feet, stock, socks, equipment } = createScene(engine);
   const player = createPlayerControls(scene, camera, floor);
-  const objects = createObjectInteraction(scene, camera, stock.definitions, stock.restingPairs);
+  const objects = createObjectInteraction(scene, camera,
+    [...stock.definitions, ...socks.map((sock) => sock.definition)],
+    stock.restingPairs, equipment.interaction);
   const detachControls = attachPointerControls(canvas, { ...player, tapAt: objects.tapAt });
   const render = (): void => {
     const deltaSeconds = engine.getDeltaTime() / 1000;

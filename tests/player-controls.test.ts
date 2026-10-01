@@ -76,13 +76,13 @@ test('nearby targets are not overshot and steps stop inside the room boundary', 
   const h = setup();
   h.camera.position.set(0, VIEW.eyeHeight, -3);
   const near = new Vector3(0, 0, -2.8);
-  h.camera.setTarget(near);
+  h.camera.setTarget(near.add(new Vector3(0, 0.8, 0)));
   h.controls.stepAt(...h.screen(near));
   h.controls.update(1);
   assert(Math.abs(h.camera.position.z - (-2.8)) < 1e-5);
   h.camera.position.set(STORE.width / 2 - 0.3, VIEW.eyeHeight, -3);
   const edge = new Vector3(STORE.width / 2 - 0.01, 0, -3);
-  h.camera.setTarget(edge);
+  h.camera.setTarget(edge.add(new Vector3(0, 0.8, 0)));
   h.controls.stepAt(...h.screen(edge));
   h.controls.update(1);
   assert(Math.abs(h.camera.position.x - (STORE.width / 2 - CONTROLS.wallClearance)) < 1e-5);

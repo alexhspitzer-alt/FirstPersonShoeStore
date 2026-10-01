@@ -56,10 +56,12 @@ export function createPlayerControls(scene: Scene, camera: TargetCamera, floor: 
     },
 
     stepAt(x: number, y: number): void {
+      if (camera.rotation.x >= CONTROLS.feetInspectionPitch) return;
       // Don't queue steps: releasing a rapid sequence of double-taps must not cause
       // movement to continue later. Looking remains available during a step.
       if (step) return;
-      const hit = scene.pick(x, y);
+      const hit = scene.pick(x, y, (mesh) => mesh.isEnabled() && mesh.isVisible
+        && mesh.isPickable && (mesh.layerMask & camera.layerMask) !== 0, false, camera);
       // Pick all visible surfaces, so a wall/ceiling occludes the floor behind it.
       if (!hit?.hit || hit.pickedMesh !== floor || !hit.pickedPoint) return;
       const direction = hit.pickedPoint.subtract(camera.position);
@@ -79,6 +81,12 @@ export function createPlayerControls(scene: Scene, camera: TargetCamera, floor: 
     },
 
     update(deltaSeconds: number): void {
+      // Stop immediately during foot inspection. Looking up requires a new step;
+      // an interrupted stride must not resume unexpectedly or leave feet sliding.
+      if (camera.rotation.x >= CONTROLS.feetInspectionPitch) {
+        step = undefined;
+        return;
+      }
       if (!step) return;
       step.elapsed += deltaSeconds;
       const progress = Math.min(step.elapsed / CONTROLS.stepDurationSeconds, 1);

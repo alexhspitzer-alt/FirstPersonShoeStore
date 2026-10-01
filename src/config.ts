@@ -38,6 +38,7 @@ export const RENDERING = {
 export const CONTROLS = {
   lookRadiansPerPixel: 0.004,
   maxPitch: (85 * Math.PI) / 180,
+  feetInspectionPitch: (80 * Math.PI) / 180,
   dragThresholdPixels: 8,
   maxTapMilliseconds: 300,
   doubleTapMilliseconds: 350,
@@ -68,4 +69,15 @@ export const PLAYER_FEET = {
   horizontalFov: (38 * Math.PI) / 180,
   minimumVerticalFov: (45 * Math.PI) / 180,
   screenCenterY: 0.86,
+} as const;
+
+export const SOCK = {
+  color: '#f5f4ef',
+  accentColor: '#8152bd',
+  shellScale: 1.04,
+  cuffHeight: 0.12,
+  cuffDiameter: 0.10,
+  cuffBottom: 0.04,
+  ankleZ: -PLAYER_FEET.length * 0.25,
+  zigzagRadius: 0.003,
 } as const;

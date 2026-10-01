@@ -22,13 +22,23 @@ const OUTLINE: readonly (readonly [number, number])[] = [
   [-0.33, -0.32], [-0.27, -0.44], [-0.14, -0.49],
 ];
 
-function makeFootMesh(scene: Scene, name: string, sign: number): Mesh {
+const SOCK_OUTLINE: readonly (readonly [number, number])[] = [
+  [0, -0.5], [0.22, -0.48], [0.33, -0.4], [0.36, -0.24], [0.38, -0.08],
+  [0.47, 0.12], [0.5, 0.30], [0.46, 0.44], [0.30, 0.51],
+  [0.05, 0.53], [-0.24, 0.53], [-0.43, 0.48], [-0.49, 0.35],
+  [-0.43, 0.17], [-0.34, 0.02], [-0.29, -0.14],
+  [-0.33, -0.32], [-0.27, -0.44], [-0.14, -0.49],
+];
+
+/** Shared foot-shaped geometry; covered toes have a smooth fabric silhouette. */
+export function createFootMesh(scene: Scene, name: string, sign: number, covered = false): Mesh {
+  const outline = covered ? SOCK_OUTLINE : OUTLINE;
   const { width, height, length } = PLAYER_FEET;
   const positions: number[] = [];
   const indices: number[] = [];
   // Three connected contour rings bevel the sole and upper into one surface.
   for (const [scale, rise] of [[0.92, 0], [1, 0.28], [0.86, 0.72]]) {
-    for (const [x, z] of OUTLINE) {
+    for (const [x, z] of outline) {
       const toeTaper = 1 - Math.max(0, z) * 0.55;
       positions.push(sign * x * width * scale!, height * rise! * toeTaper, z * length * scale!);
     }
@@ -37,7 +47,7 @@ function makeFootMesh(scene: Scene, name: string, sign: number): Mesh {
     // Babylon's default left-handed winding; mirror without flipping normals.
     indices.push(a, sign < 0 ? b : c, sign < 0 ? c : b);
   };
-  const count = OUTLINE.length;
+  const count = outline.length;
   for (let ring = 0; ring < 2; ring++) {
     for (let i = 0; i < count; i++) {
       const next = (i + 1) % count;
@@ -62,6 +72,11 @@ function makeFootMesh(scene: Scene, name: string, sign: number): Mesh {
   data.positions = positions;
   data.indices = indices;
   data.normals = normals;
+  // Match primitive vertex attributes so fabric/cuffs can form one object.
+  data.uvs = [];
+  for (let i = 0; i < positions.length; i += 3) {
+    data.uvs.push(positions[i]! / width + 0.5, positions[i + 2]! / length + 0.5);
+  }
   const foot = new Mesh(name, scene);
   data.applyToMesh(foot);
   foot.layerMask = PLAYER_FEET.layerMask;
@@ -82,7 +97,7 @@ export function createPlayerFeet(scene: Scene, camera: TargetCamera) {
     const slot = new TransformNode(`player-${side}-foot-slot`, scene);
     slot.parent = root;
     slot.position.set(sign * PLAYER_FEET.spacing / 2, 0, PLAYER_FEET.eyeToAnkleOffset);
-    const foot = makeFootMesh(scene, `player-${side}-foot`, sign);
+    const foot = createFootMesh(scene, `player-${side}-foot`, sign);
     foot.parent = slot;
     foot.material = skin;
     return slot;

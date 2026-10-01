@@ -10,16 +10,33 @@ const HOLD_OFFSET = new Vector3(0, -0.18, 0.85);
 const MAX_PICKUP_MASS = 25;
 const GRAVITY = 9.8;
 
+export interface HeldObjectAction {
+  held: Mesh;
+  definition: ObjectDefinition;
+  target: Mesh;
+  /** Transfer ownership to an effect (equip/consume/place) without dropping. */
+  releaseHeld(): Mesh | undefined;
+}
+
+export interface ObjectInteractionOptions {
+  /** Additional views/targets can participate without changing pointer gestures. */
+  pickTarget?(x: number, y: number, held: Mesh | undefined): Mesh | null;
+  onPickup?(mesh: Mesh): void;
+  /** True consumes the tap. False falls back to ordinary pickup/drop behavior. */
+  useHeldObject?(action: HeldObjectAction): boolean;
+}
+
 /** Game state owns carried and falling positions; definitions remain immutable. */
 export function createObjectInteraction(
   scene: Scene,
   camera: TargetCamera,
   objects: readonly ObjectDefinition[],
   restingPairs: readonly (readonly [baseId: string, topId: string])[] = [],
+  options: ObjectInteractionOptions = {},
 ) {
   const definitions = new Map(objects.map((object) => [object.id, object]));
   let held: Mesh | undefined;
-  const falls = new Map<Mesh, { bottom: number; speed: number }>();
+  const falls = new Map<Mesh, { restingY: number; speed: number }>();
   let supported: { mesh: Mesh; base: Mesh; lastBaseCenter: Vector3 } | undefined;
 
   const overlap = (aMin: number, aMax: number, bMin: number, bMax: number) => aMin < bMax && aMax > bMin;
@@ -62,8 +79,10 @@ export function createObjectInteraction(
   function startFall(mesh: Mesh): void {
     mesh.computeWorldMatrix(true);
     const bounds = mesh.getBoundingInfo().boundingBox;
-    const halfHeight = (bounds.maximumWorld.y - bounds.minimumWorld.y) / 2;
     const bottom = bounds.minimumWorld.y;
+    // Equipment origins are at their attachment point, not necessarily at the
+    // bounding-box center. Preserve that offset when settling any shape.
+    const originToBottom = mesh.position.y - bottom;
     const ray = new Ray(new Vector3(mesh.position.x, bottom + 0.001, mesh.position.z), Vector3.Down(), 100);
     // Use actual shelf triangles, not its enclosing collision box: open levels
     // let the shoebox settle on whichever board is directly below it.
@@ -81,9 +100,9 @@ export function createObjectInteraction(
       if (!touchesRim(mesh, base)) continue;
       supportHeight = Math.max(supportHeight, box.maximumWorld.y);
     }
-    const restingCenter = supportHeight + halfHeight;
-    mesh.position.y = Math.max(mesh.position.y, restingCenter);
-    falls.set(mesh, { bottom: restingCenter, speed: 0 });
+    const restingY = supportHeight + originToBottom;
+    mesh.position.y = Math.max(mesh.position.y, restingY);
+    falls.set(mesh, { restingY, speed: 0 });
   }
 
   function moveSupported(): void {
@@ -112,24 +131,61 @@ export function createObjectInteraction(
     held = undefined;
   }
 
+  function releaseHeld(): Mesh | undefined {
+    if (!held) return;
+    moveSupported();
+    const mesh = held;
+    mesh.setParent(null);
+    held = undefined;
+    if (supported) {
+      const top = supported.mesh;
+      supported = undefined;
+      startFall(top);
+    }
+    return mesh;
+  }
+
   return {
+    get heldObject(): Mesh | undefined { return held; },
     tapAt(x: number, y: number): boolean {
-      // The held object can be tapped even when another mesh is behind it.
-      if (held) {
-        if (!scene.pick(x, y, (mesh) => mesh === held || mesh === supported?.mesh)?.hit) return false;
+      const picked = options.pickTarget
+        ? options.pickTarget(x, y, held)
+        : scene.pick(x, y, (mesh) => mesh.isEnabled() && mesh.isVisible
+          && mesh.isPickable && (mesh.layerMask & camera.layerMask) !== 0,
+        false, camera)?.pickedMesh as Mesh | null | undefined;
+      if (!picked) return false;
+      if (held && (picked === held || picked === supported?.mesh)) {
         drop();
         return true;
       }
-      const picked = scene.pick(x, y)?.pickedMesh as Mesh | null | undefined;
-      const definition = picked && definitions.get(picked.name);
-      if (!picked || !definition) return false;
-      const { interactive, movable, mass } = definition.properties;
-      if (!interactive || !movable || mass >= MAX_PICKUP_MASS || mass <= 0) return false;
+      // Held-item effects are offered first. A future key/lock rule can use the
+      // same hook, leaving the key held or transferring it via releaseHeld().
+      if (held && options.useHeldObject?.({
+        held, definition: definitions.get(held.name)!, target: picked, releaseHeld,
+      })) return true;
+      const definition = definitions.get(picked.name);
+      const canPickup = definition && definition.properties.interactive
+        && definition.properties.movable && definition.properties.mass < MAX_PICKUP_MASS
+        && definition.properties.mass > 0;
+      if (!canPickup) {
+        // Preserve tapping a carried piece even if store geometry crosses it.
+        // Explicit effects and another eligible pickup take priority above this.
+        if (held && scene.pick(x, y, (mesh) => mesh === held || mesh === supported?.mesh,
+          false, camera)?.hit) {
+          drop();
+          return true;
+        }
+        return false;
+      }
+      // Picking another eligible object swaps hands; inert targets do nothing.
+      if (held) drop();
       falls.delete(picked);
       if (picked === supported?.mesh) supported = undefined;
+      options.onPickup?.(picked);
       attachRestingObject(picked);
       held = picked;
       picked.setParent(camera);
+      picked.layerMask = camera.layerMask;
       picked.position.copyFrom(HOLD_OFFSET);
       picked.rotation.set(0, 0, 0);
       moveSupported();
@@ -140,8 +196,8 @@ export function createObjectInteraction(
       const seconds = Math.max(0, Math.min(deltaSeconds, 0.05));
       for (const [mesh, fall] of falls) {
         fall.speed += GRAVITY * seconds;
-        mesh.position.y = Math.max(fall.bottom, mesh.position.y - fall.speed * seconds);
-        if (mesh.position.y <= fall.bottom) {
+        mesh.position.y = Math.max(fall.restingY, mesh.position.y - fall.speed * seconds);
+        if (mesh.position.y <= fall.restingY) {
           falls.delete(mesh);
           if (supported?.base === mesh) supported = undefined;
         }

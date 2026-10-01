@@ -10,6 +10,8 @@ import { createStore } from '../world/createStore';
 import { createShelf } from '../world/createShelf';
 import { createShelfStock } from '../world/createShelfStock';
 import { createPlayerFeet } from '../player/createPlayerFeet';
+import { createSocks } from '../player/createSocks';
+import { createFootEquipment } from '../systems/createFootEquipment';
 import { createCheckout } from '../world/createCheckout';
 
 export function createScene(engine: Engine) {
@@ -30,5 +32,7 @@ export function createScene(engine: Engine) {
   createCheckout(scene);
   const camera = createCamera(scene);
   const feet = createPlayerFeet(scene, camera);
-  return { scene, camera, floor, feet, stock };
+  const socks = createSocks(scene);
+  const equipment = createFootEquipment(scene, feet, socks);
+  return { scene, camera, floor, feet, stock, socks, equipment };
 }

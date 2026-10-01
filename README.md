@@ -7,6 +7,8 @@ There are no HUD, external assets, physics, or backend.
 
 - Drag anywhere to look with inverted axes: dragging right turns left, and dragging up looks down. Vertical looking stops short of flipping over.
 - Double-tap the visible floor to take one 0.7 m step toward that spot (shorter if nearby).
+- Looking fully down (80–85°) disables stepping and cancels a stride in progress;
+  looking remains active. Look up and double-tap again to move.
 - Single taps, long presses, drags, and taps on walls/ceiling do not move you.
 - Steps ease over 0.18 seconds and stop short of walls. Double-taps during a step
   are ignored rather than queued; looking still works during movement.
@@ -84,8 +86,12 @@ screen. Feet follow player position and heading at floor height. A separate
 first-person camera renders only feet/equipment with a tighter field of view
 and viewport-aware pitch framing; the store camera and picking stay unchanged.
 Feet enter the view through ordinary clipping, without a visibility threshold. There are no legs or
-walking animation yet. Each foot has an equipment slot for a future independent,
-removable shoe object; equipping/unequipping is not implemented.
+walking animation. Each foot has an equipment slot for independent, removable
+objects. Two white socks with purple ankle zigzags start equipped (mass 1 each).
+Tap a worn sock to carry it; tap the held sock to drop it. While holding a sock,
+tap a bare foot to dress it. Either sock fits either foot. Tap the other worn
+sock to drop the one held and pick that one up. An empty foot is otherwise inert.
+Dropped socks use ordinary world pickup and vertical collision/floor settling.
 
 `defineShoebox(id, color, shoeSize)` describes a matching box/lid pair;
 `createShoebox(scene, definition, position)` builds and places it. Shoe size is
@@ -93,6 +99,14 @@ merchandise-specific data, not a shared property of every object. The starter
 stock recipe in `createShelfStock.ts` can be replaced by generated data without
 changing meshes or pickup registration. Labels use small primitive numerals,
 share two materials, and move with their box; they need no canvas textures/fonts.
+
+`createObjectInteraction` offers a `useHeldObject` hook before ordinary pickup.
+A handler decides whether the held object is relevant to the clicked target and
+can transfer it with `releaseHeld()` or leave it held. Without an applicable
+effect, another eligible pickup swaps hands; inert surfaces retain the held item.
+`createFootEquipment` supplies the sock/foot rule and foot-camera hit testing.
+World picking stays on the store camera. This hook supports later item/target
+rules without implementing keys, locks, or any other example now.
 
 ## Checkout
 
@@ -141,7 +155,9 @@ src/
   world/createShelf.ts    Five-level brown shelf and placement
   world/createShoebox.ts  Reusable open box/lid factory and numeric labels
   world/createShelfStock.ts  Starter stock recipe and interaction registration
-  player/createPlayerFeet.ts  Floor-anchored bare feet and future shoe slots
+  player/createPlayerFeet.ts  Floor-anchored feet, shared shape, and body camera
+  player/createSocks.ts    White fabric, cuffs, and purple ankle markings
+  systems/createFootEquipment.ts  Worn state, foot picking, and sock/foot effects
   world/createCheckout.ts  Counter, POS, and clerk geometry and placement
   world/createStore.ts    Four cardinal walls and two step-spaced surface grids
   systems/createPlayerControls.ts  Look, floor picking, bounded step animation
@@ -187,5 +203,5 @@ check that movement stops inside the room. Confirm floor picking after rotation.
 Verify the floor and ceiling grid squares match a step and the four cardinal
 wall colors stay distinguishable.
 
-Natural next milestone: create shoe objects and implement equipping/removing them
-using the foot slots and each shoebox’s size data.
+Natural next milestone: create shoe objects using the equipment slots,
+held-item interaction hook, and each shoebox’s size data.
